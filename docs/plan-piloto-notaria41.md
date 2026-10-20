@@ -54,15 +54,18 @@ El nivel 1 puede iniciar antes. El nivel 2 es obligatorio antes de incorporar un
 - 569 pruebas unitarias y 213 pruebas E2E aprobadas con la barrera de despliegue.
 - `sofiaprefirma.com` y `www.sofiaprefirma.com` sirven la portada comercial desde el proyecto `sofiaprefirma`, sin autenticación de Vercel.
 - Proyecto aislado `sofiaprefirma-notaria41` creado con `projectId` `prj_upo2XAFcjMVTjEVgp9tE2l8ECukg`.
-- Deployment de preparación del piloto creado sin dominio, Supabase ni datos reales; permanece protegido por Vercel Authentication.
-- `NOTARIA_ID=notaria41` está fijado en producción y previews del piloto; sus definiciones de cron están vacías hasta el corte operativo.
-- Sin Supabase, las funciones de producción fallan cerradas y no recurren al almacén temporal en memoria.
+- Deployment `dpl_4kdYCZ2MPcYMy8DuCSEjzgiH9SpV` creado sin dominio personalizado; permanece protegido por Vercel Authentication en modo `all`.
+- Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA están configurados en producción y previews del piloto; sus definiciones de cron están vacías hasta el corte operativo.
+- Respaldo verificable previo a la migración guardado fuera del repositorio; incluye los esquemas `public`, `auth` y `storage` y tiene hashes SHA-256 registrados localmente.
+- Bloques de métricas, perfil notario y consentimientos verificados; bloque del portal del 2026-10-18 aplicado el 19 de octubre de 2026 dentro de una transacción.
+- `portal`, `documentos` y `pagosEnLinea` están fijados en `0`; `/api/cuenta` devuelve 503 mientras el piloto está en preparación.
 
 ### Bloqueos actuales
 
 - El checkout principal continúa vinculado en `.vercel/project.json` a `notaria41`.
-- El remoto Git sigue siendo `marcoz1691/marquinho.git`; falta el repositorio independiente.
-- GitHub CLI no tiene una sesión autenticada, por lo que aún no se puede crear ni proteger el repositorio independiente desde este entorno.
+- El repositorio independiente `marcoz1691/sofia-prefirma` existe; `main` y `claude/portal-base` apuntan al commit `7e8d869`. Falta proteger `main` en GitHub.
+- El proyecto comercial de Vercel está conectado a ese repositorio y a `main`; el piloto queda deliberadamente sin conexión Git automática hasta tener una rama de producción sin cron jobs.
+- La contraseña de base debe rotarse antes de abrir el piloto porque una herramienta la mostró en la salida local de diagnóstico; después se actualiza `.env.local`.
 - `.shots.mjs` y el repositorio anidado y vacío `inmobiliaria/` siguen ajenos y sin seguimiento; no deben incluirse.
 - El núcleo histórico —panel, conversaciones, citas y documentos— todavía tiene consultas globales.
 - Precios, ajustes, interruptores, contenido, métricas, auditoría y algunos límites siguen siendo globales.
@@ -77,8 +80,9 @@ Prioridad: **crítica**.
 
 - [x] Guardar los cambios pendientes de dominio e iconos sin incluir archivos ajenos.
 - [x] Repetir pruebas unitarias y E2E desde el SHA que se publicará.
-- [ ] Crear y autenticar el repositorio `sofia-prefirma`.
-- [ ] Subir la rama y proteger la rama principal.
+- [x] Crear el repositorio `sofia-prefirma` y convertirlo en `origin` local.
+- [x] Subir `main` y `claude/portal-base` al repositorio independiente.
+- [ ] Proteger la rama principal en GitHub.
 - [x] Crear o confirmar los proyectos `sofiaprefirma` y `sofiaprefirma-notaria41`.
 - [x] Añadir una verificación previa al despliegue que compare nombre y `projectId` esperados.
 - [x] Confirmar el dominio `.vercel.app` real de cada proyecto; no codificar un alias histórico como si fuera estable.
@@ -95,15 +99,15 @@ Prioridad: **crítica**.
 
 Prioridad: **crítica**.
 
-- [ ] Crear un respaldo verificable de Supabase antes de migrar.
-- [ ] Registrar cada bloque SQL aplicado y su fecha; no ejecutar migraciones a ciegas.
-- [ ] Aplicar, en orden, métricas y perfil notario del 2026-10-11, consentimientos del 2026-10-16 y portal del 2026-10-18.
+- [x] Crear un respaldo verificable de Supabase antes de migrar.
+- [x] Registrar cada bloque SQL aplicado y su fecha; no ejecutar migraciones a ciegas.
+- [x] Aplicar, en orden, métricas y perfil notario del 2026-10-11, consentimientos del 2026-10-16 y portal del 2026-10-18.
 - [ ] Configurar en el proyecto piloto: Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, Resend, remitente, `SITIO_URL`, retención, MFA y secretos de cron.
-- [ ] Exigir un `CUENTA_SECRETO` aleatorio de al menos 32 bytes y documentar su rotación.
+- [x] Exigir un `CUENTA_SECRETO` aleatorio de al menos 32 bytes y documentar su rotación.
 - [ ] Verificar `sofiaprefirma.com` en Resend y probar entrega, demora y carpeta de spam.
-- [ ] Permitir la URL exacta del panel piloto en Supabase Auth.
-- [ ] Confirmar que producción nunca usa el almacén en memoria.
-- [ ] Mantener `portal=0`, `documentos=0` y `pagosEnLinea=0` durante la preparación.
+- [x] Permitir la URL exacta del panel piloto en Supabase Auth.
+- [x] Confirmar que producción nunca usa el almacén en memoria.
+- [x] Mantener `portal=0`, `documentos=0` y `pagosEnLinea=0` durante la preparación.
 - [ ] Mantener un solo backend dueño del webhook de WhatsApp y de los crones; no copiar credenciales operativas a dos proyectos activos.
 - [ ] Planificar el corte de Meta y crones como una sola operación: activar el proyecto piloto y retirar secretos operativos del proyecto anterior.
 - [ ] Añadir alertas de errores de funciones, correo, crones y almacenamiento sin registrar datos personales.

@@ -18,12 +18,13 @@ El producto se llama **Sofía PreFirma**. La Notaría 41 de Quito es su primer p
 - Los interruptores `portal` y `pagosEnLinea` nacen apagados. El primero se enciende después de configurar correo y base; el segundo solo después de integrar una pasarela real.
 - Antes de desplegar, ejecuta `npm run vercel:verificar:comercial` o `npm run vercel:verificar:piloto` dentro del checkout aislado correspondiente. La comprobación exige tanto el nombre como el `projectId` exactos y bloquea el proyecto institucional.
 - Durante la preparación, la verificación del piloto también exige que el `vercel.json` de ese checkout no contenga cron jobs. Se restauran únicamente después de G1 y del corte documentado del backend operativo.
+- El proyecto comercial está conectado al repositorio `marcoz1691/sofia-prefirma`, rama `main`. El piloto se despliega manualmente desde un staging verificado y no se conecta todavía a Git para impedir que un push restaure cron jobs por accidente.
 - No despliegues desde el checkout principal: actualmente su vínculo local pertenece a `notaria41`.
 
 ## Antes de habilitar el portal
 
-1. Aplicar el bloque del **2026-10-18** de `supabase/esquema.sql`.
-2. Configurar en `sofiaprefirma`: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NOTARIA_ID`, `CUENTA_SECRETO`, `RESEND_API_KEY` y `CORREO_REMITENTE`.
+1. El bloque del **2026-10-18** de `supabase/esquema.sql` se aplicó el 19 de octubre de 2026 después de crear un respaldo verificable.
+2. En `sofiaprefirma-notaria41` ya están configurados Supabase, `NOTARIA_ID`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA. Faltan `RESEND_API_KEY` y `CORREO_REMITENTE`.
 3. Verificar `sofiaprefirma.com` en el proveedor de correo.
 4. Probar código de acceso, cierre de sesión, vínculo de una cita, aislamiento entre clientes y carga de documentos.
 5. Activar `portal` desde el panel. No activar `pagosEnLinea` sin proveedor real.
@@ -35,8 +36,10 @@ El destino recomendado para el portal de la primera notaría es `notaria41.sofia
 ## Estado verificado y reversión
 
 - Producción comercial validada: deployment `dpl_6VhdaVfgNCZ2DZeL8wE4vnaRcb8N`.
-- Piloto aislado de preparación: deployment `dpl_8o9ePXLLfzFWX1JXT4ijQSC4YCVc`; permanece protegido y sin dominio. Tiene `NOTARIA_ID=notaria41`, pero no Supabase ni otros secretos operativos.
-- El deployment de preparación se publicó sin definiciones de cron. No se restauran hasta configurar `CRON_SECRET`, Supabase y el corte del único backend operativo.
+- Piloto aislado de preparación: deployment `dpl_4kdYCZ2MPcYMy8DuCSEjzgiH9SpV`; permanece protegido en modo Vercel Authentication `all` y sin dominio personalizado. Tiene Supabase, `NOTARIA_ID=notaria41`, secreto de cuenta, retención y MFA.
+- El deployment de preparación se publicó sin definiciones de cron. `portal`, `documentos` y `pagosEnLinea` están fijados en `0`; no se restauran cron jobs hasta configurar `CRON_SECRET` y ejecutar el corte del único backend operativo.
+- Supabase Auth permite las URLs del panel piloto sin reemplazar la URL principal del panel institucional.
+- La contraseña de base debe rotarse antes de abrir el piloto porque apareció en la salida local de una comprobación de respaldo; después hay que actualizar `.env.local` y cualquier variable que la use.
 - Antes de promover otra versión, conserva el ID del deployment que atiende cada dominio.
 - Para volver a la versión comercial validada, usa `vercel promote dpl_6VhdaVfgNCZ2DZeL8wE4vnaRcb8N --yes` desde un checkout que haya pasado `npm run vercel:verificar:comercial`.
 - No promociones el deployment del piloto ni le asignes `notaria41.sofiaprefirma.com` hasta completar las variables, migraciones y puertas G1–G2 del plan maestro.
