@@ -36,12 +36,14 @@ El destino recomendado para el portal de la primera notaría es `notaria41.sofia
 ## Estado verificado y reversión
 
 - Producción comercial validada: deployment `dpl_6VhdaVfgNCZ2DZeL8wE4vnaRcb8N`.
-- Piloto aislado de preparación: deployment `dpl_4kdYCZ2MPcYMy8DuCSEjzgiH9SpV`; permanece protegido en modo Vercel Authentication `all` y sin dominio personalizado. Tiene Supabase, `NOTARIA_ID=notaria41`, secreto de cuenta, retención y MFA.
+- Piloto aislado de preparación: deployment `dpl_47b9yRbJmdHKAzGxRb417EQ5scr6`, publicado el 2026-10-20 desde el commit `ff4acbe`; permanece protegido en modo Vercel Authentication `all` y sin dominio personalizado. El alias estable `sofiaprefirma-notaria41.vercel.app` apunta a esta versión. Tiene Supabase, `NOTARIA_ID=notaria41`, secreto de cuenta, retención y MFA.
+- La verificación posterior al despliegue confirmó portada autenticada `200`, acceso público redirigido al inicio de sesión de Vercel, precios aislados de `notaria41` y `/api/cuenta` cerrado con `503` porque `portal=0`.
 - El deployment de preparación se publicó sin definiciones de cron. `portal`, `documentos` y `pagosEnLinea` están fijados en `0`; no se restauran cron jobs hasta configurar `CRON_SECRET` y ejecutar el corte del único backend operativo.
 - Supabase Auth permite las URLs del panel piloto sin reemplazar la URL principal del panel institucional.
 - El respaldo inmediatamente anterior al aislamiento multitenant está en `~/Documents/Respaldos-Sofia-Prefirma/2026-10-19-pre-multitenant/`; sus dos archivos tienen permisos `600` y hashes SHA-256 verificados.
 - La migración multitenant quedó verificada con 12 tablas tenantizadas, 7 llaves foráneas compuestas y las dos firmas —nueva y compatible— de las funciones de métricas y límites. El bloque `2026-10-19b` retiró las FK simples redundantes para que PostgREST tenga una sola relación posible por embed.
 - La contraseña de base debe rotarse antes de abrir el piloto porque apareció en la salida local de una comprobación de respaldo; después hay que actualizar `.env.local` y cualquier variable que la use.
 - Antes de promover otra versión, conserva el ID del deployment que atiende cada dominio.
+- Para volver a la versión anterior del piloto, usa `vercel promote dpl_4kdYCZ2MPcYMy8DuCSEjzgiH9SpV --yes` desde un checkout que haya pasado `npm run vercel:verificar:piloto` y que no contenga cron jobs.
 - Para volver a la versión comercial validada, usa `vercel promote dpl_6VhdaVfgNCZ2DZeL8wE4vnaRcb8N --yes` desde un checkout que haya pasado `npm run vercel:verificar:comercial`.
 - No promociones el deployment del piloto ni le asignes `notaria41.sofiaprefirma.com` hasta completar las variables, migraciones y puertas G1–G2 del plan maestro.
