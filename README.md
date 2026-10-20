@@ -71,7 +71,7 @@ La guía para el notario está en [cms/GUIA-NOTARIO.md](cms/GUIA-NOTARIO.md).
 ### 4. Portal «Mis trámites» de Sofía PreFirma
 
 1. Ejecuta en Supabase el bloque **2026-10-18: cuentas de cliente y portal «Mis trámites»** de `supabase/esquema.sql`.
-2. En el proyecto Vercel `sofiaprefirma`, configura `NOTARIA_ID=notaria41`, un `CUENTA_SECRETO` aleatorio y las credenciales de Resend (`RESEND_API_KEY`, `CORREO_REMITENTE`). Verifica primero el dominio `sofiaprefirma.com` en Resend.
+2. En el proyecto Vercel `sofiaprefirma`, configura `NOTARIA_ID=notaria41`, valores aleatorios e independientes de al menos 32 bytes para `CUENTA_SECRETO` y `HUELLA_IP_SECRETO`, y las credenciales de Resend (`RESEND_API_KEY`, `CORREO_REMITENTE`). Verifica primero el dominio `sofiaprefirma.com` en Resend.
 3. Despliega y prueba el acceso con un correo de prueba. Luego activa **Mis trámites** desde Panel → Piloto. Sin el interruptor, la API responde como no disponible y las citas funcionan como antes.
 4. **Pagos en línea permanece apagado** hasta contratar e integrar una pasarela real. El proveedor falso se niega a funcionar en producción.
 

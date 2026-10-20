@@ -24,7 +24,7 @@ El producto se llama **Sofía PreFirma**. La Notaría 41 de Quito es su primer p
 ## Antes de habilitar el portal
 
 1. Los bloques del **2026-10-18** y **2026-10-19** de `supabase/esquema.sql` se aplicaron el 19 de octubre de 2026, cada uno después de crear un respaldo verificable. El segundo es expansivo y mantiene compatibilidad temporal con el backend institucional anterior.
-2. En `sofiaprefirma-notaria41` ya están configurados Supabase, `NOTARIA_ID`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA. Faltan `RESEND_API_KEY` y `CORREO_REMITENTE`.
+2. En `sofiaprefirma-notaria41` ya están configurados Supabase, `NOTARIA_ID`, `CUENTA_SECRETO`, `HUELLA_IP_SECRETO`, `SITIO_URL`, retención y MFA. Faltan `RESEND_API_KEY` y `CORREO_REMITENTE`.
 3. Verificar `sofiaprefirma.com` en el proveedor de correo.
 4. Probar código de acceso, cierre de sesión, vínculo de una cita, aislamiento entre clientes y carga de documentos.
 5. Activar `portal` desde el panel. No activar `pagosEnLinea` sin proveedor real.

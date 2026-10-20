@@ -1,6 +1,6 @@
 import { AVISO_PRIVACIDAD, TERMINOS } from "../js/legal.js";
 import { describe, it, expect, vi } from "vitest";
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { crearManejadorDocumentos } from "../api/_lib/documentos-http.js";
 import { crearAlmacenMemoria } from "../api/_lib/almacen-memoria.js";
 
@@ -182,7 +182,7 @@ describe("API de documentos web", () => {
     const uso = vi.spyOn(almacen, "contarUso");
     for (let i = 0; i < 40; i++) expect((await m.POST(pedir({ ...cuerpo, sesion: SESION + i }))).status).toBe(404);
     expect((await m.POST(pedir())).status).toBe(429);
-    const huella = createHash("sha256").update("notaria41:190.152.10.20").digest("hex").slice(0, 24);
+    const huella = createHmac("sha256", "solo-desarrollo-huella-ip-no-produccion").update("notaria41|190.152.10.20").digest("hex").slice(0, 32);
     expect(uso).toHaveBeenCalledWith("documentos:ip:" + huella, 3600000, AHORA);
     expect(JSON.stringify(uso.mock.calls)).not.toContain("190.152.10.20");
   });

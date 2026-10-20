@@ -106,7 +106,7 @@ Prioridad: **crítica**.
 - [x] Registrar cada bloque SQL aplicado y su fecha; no ejecutar migraciones a ciegas.
 - [x] Aplicar, en orden, métricas y perfil notario del 2026-10-11, consentimientos del 2026-10-16 y portal del 2026-10-18.
 - [x] Respaldar y aplicar en una transacción el aislamiento multitenant del 2026-10-19 sin interrumpir el backend anterior.
-- [ ] Configurar en el proyecto piloto: Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, Resend, remitente, `SITIO_URL`, retención, MFA y secretos de cron.
+- [ ] Configurar en el proyecto piloto: Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `HUELLA_IP_SECRETO`, Resend, remitente, `SITIO_URL`, retención, MFA y secretos de cron.
 - [x] Exigir un `CUENTA_SECRETO` aleatorio de al menos 32 bytes y documentar su rotación.
 - [ ] Verificar `sofiaprefirma.com` en Resend y probar entrega, demora y carpeta de spam.
 - [x] Permitir la URL exacta del panel piloto en Supabase Auth.
@@ -128,7 +128,7 @@ Prioridad: **crítica/alta**.
 - [x] Añadir `notaria_id` al núcleo, panel, agenda, documentos, precios, ajustes, métricas, auditoría y límites.
 - [x] Comprobar tenant y autorización antes de generar una URL firmada de documento.
 - [ ] Añadir pruebas de que notas internas nunca llegan a portal, correo o WhatsApp.
-- [ ] Validar la IP proporcionada por Vercel y usar HMAC secreto para las huellas y límites.
+- [x] Validar la IP proporcionada por Vercel y usar HMAC secreto, independiente y tenantizado para las huellas y límites.
 - [x] Tenantizar las cuotas de OTP y vinculación.
 - [x] Exigir JSON, `X-Sofia`, `Origin` exacto y `Sec-Fetch-Site: same-origin` cuando esté presente en las solicitudes mutables del portal.
 - [x] Ejecutar `npm audit` para dependencias de producción: 0 vulnerabilidades el 19 de octubre de 2026.
