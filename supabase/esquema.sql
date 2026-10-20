@@ -410,3 +410,128 @@ alter table pagos enable row level security;
 alter table pago_eventos enable row level security;
 revoke all on notarias, clientes, cliente_codigos, cliente_sesiones, tramite_vinculaciones, tramite_eventos, pagos, pago_eventos from anon, authenticated;
 -- Sin políticas: el aislamiento por notaría y por cliente lo exige el servidor (cada método del almacén pide notariaId).
+
+-- 2026-10-19: aislamiento del núcleo por notaría.
+-- Esta migración amplía el aislamiento del portal al panel, conversaciones, citas, documentos, precios,
+-- ajustes, métricas, auditoría, límites de uso y consentimientos. Los datos existentes pertenecen al piloto.
+
+-- Conversaciones y citas: el mismo teléfono y el mismo ticket diario pueden existir en notarías distintas.
+alter table conversaciones drop constraint if exists conversaciones_telefono_key;
+create unique index if not exists conversaciones_notaria_telefono on conversaciones (notaria_id, telefono);
+create unique index if not exists conversaciones_notaria_id_id on conversaciones (notaria_id, id);
+drop index if exists solicitudes_cita_fecha_codigo;
+create unique index if not exists solicitudes_cita_notaria_fecha_codigo on solicitudes_cita (notaria_id, fecha, codigo);
+create unique index if not exists solicitudes_cita_notaria_id_id on solicitudes_cita (notaria_id, id);
+alter table solicitudes_cita drop constraint if exists solicitudes_cita_notaria_conversacion_fkey;
+alter table solicitudes_cita add constraint solicitudes_cita_notaria_conversacion_fkey
+  foreign key (notaria_id, conversacion_id) references conversaciones(notaria_id, id) on delete cascade;
+
+-- Historial y cola: además de heredar la conversación, cada fila lleva el tenant para que toda consulta pueda
+-- fallar cerrada sin depender de que quien la llama haya validado antes el UUID de la conversación o sesión.
+-- Los defaults de `notaria41` se conservan en esta fase expansiva porque el backend institucional anterior comparte
+-- la base durante el corte. Se retiran en una migración contractual después de actualizar y verificar ambos despliegues.
+alter table sesiones add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+create unique index if not exists sesiones_notaria_id_id on sesiones (notaria_id, id);
+create index if not exists sesiones_notaria_conversacion on sesiones (notaria_id, conversacion_id, creada);
+alter table sesiones drop constraint if exists sesiones_notaria_conversacion_fkey;
+alter table sesiones add constraint sesiones_notaria_conversacion_fkey
+  foreign key (notaria_id, conversacion_id) references conversaciones(notaria_id, id) on delete cascade;
+
+alter table mensajes add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+create index if not exists mensajes_notaria_conversacion on mensajes (notaria_id, conversacion_id, id);
+alter table mensajes drop constraint if exists mensajes_notaria_conversacion_fkey;
+alter table mensajes add constraint mensajes_notaria_conversacion_fkey
+  foreign key (notaria_id, conversacion_id) references conversaciones(notaria_id, id) on delete cascade;
+alter table mensajes drop constraint if exists mensajes_notaria_sesion_fkey;
+alter table mensajes add constraint mensajes_notaria_sesion_fkey
+  foreign key (notaria_id, sesion_id) references sesiones(notaria_id, id) on delete cascade;
+
+alter table pendientes add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+create index if not exists pendientes_notaria_conversacion on pendientes (notaria_id, conversacion_id, id);
+alter table pendientes drop constraint if exists pendientes_notaria_conversacion_fkey;
+alter table pendientes add constraint pendientes_notaria_conversacion_fkey
+  foreign key (notaria_id, conversacion_id) references conversaciones(notaria_id, id) on delete cascade;
+
+alter table archivos add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+alter table archivos drop constraint if exists archivos_pkey;
+alter table archivos add constraint archivos_pkey primary key (notaria_id, conversacion_id, id);
+alter table archivos drop constraint if exists archivos_notaria_conversacion_fkey;
+alter table archivos add constraint archivos_notaria_conversacion_fkey
+  foreign key (notaria_id, conversacion_id) references conversaciones(notaria_id, id) on delete cascade;
+
+-- Documentos: la ruta y toda lectura/escritura quedan acotadas al tenant; la FK impide asociarlos a otra notaría.
+alter table documentos add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+create index if not exists documentos_notaria_conversacion on documentos (notaria_id, conversacion_id);
+alter table documentos drop constraint if exists documentos_notaria_conversacion_fkey;
+alter table documentos add constraint documentos_notaria_conversacion_fkey
+  foreign key (notaria_id, conversacion_id) references conversaciones(notaria_id, id) on delete cascade;
+
+-- Personal: un correo puede pertenecer a más de una notaría con roles diferentes.
+alter table personal drop constraint if exists personal_pkey;
+alter table personal add constraint personal_pkey primary key (notaria_id, email);
+
+-- Precios y ajustes dejan de ser globales.
+alter table precios add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+alter table precios drop constraint if exists precios_pkey;
+alter table precios add constraint precios_pkey primary key (notaria_id, tramite_id);
+alter table ajustes add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+alter table ajustes drop constraint if exists ajustes_pkey;
+alter table ajustes add constraint ajustes_pkey primary key (notaria_id, clave);
+
+-- Métricas agregadas por tenant; la función exige la notaría explícitamente.
+alter table metricas_dia add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+alter table metricas_dia drop constraint if exists metricas_dia_pkey;
+alter table metricas_dia add constraint metricas_dia_pkey primary key (notaria_id, fecha, clave);
+create or replace function sumar_metrica(p_notaria text, p_fecha date, p_clave text, p_valor bigint) returns void
+language sql security definer set search_path = public as $$
+  insert into metricas_dia (notaria_id, fecha, clave, valor) values (p_notaria, p_fecha, p_clave, p_valor)
+  on conflict (notaria_id, fecha, clave) do update set valor = metricas_dia.valor + excluded.valor;
+$$;
+revoke execute on function sumar_metrica(text, date, text, bigint) from public, anon, authenticated;
+grant execute on function sumar_metrica(text, date, text, bigint) to service_role;
+-- Compatibilidad temporal con el backend anterior de la Notaría 41.
+create or replace function sumar_metrica(p_fecha date, p_clave text, p_valor bigint) returns void
+language sql security definer set search_path = public as $$
+  select sumar_metrica('notaria41', p_fecha, p_clave, p_valor);
+$$;
+revoke execute on function sumar_metrica(date, text, bigint) from public, anon, authenticated;
+grant execute on function sumar_metrica(date, text, bigint) to service_role;
+
+-- Contadores, deduplicación, auditoría y consentimientos también pertenecen a una notaría.
+alter table uso add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+alter table uso drop constraint if exists uso_pkey;
+alter table uso add constraint uso_pkey primary key (notaria_id, clave, ventana);
+create or replace function incrementar_uso(p_notaria text, p_clave text, p_ventana bigint) returns int
+language sql security definer set search_path = public as $$
+  insert into uso (notaria_id, clave, ventana, cuenta) values (p_notaria, p_clave, p_ventana, 1)
+  on conflict (notaria_id, clave, ventana) do update set cuenta = uso.cuenta + 1
+  returning cuenta;
+$$;
+revoke execute on function incrementar_uso(text, text, bigint) from public, anon, authenticated;
+grant execute on function incrementar_uso(text, text, bigint) to service_role;
+-- Compatibilidad temporal con el backend anterior de la Notaría 41.
+create or replace function incrementar_uso(p_clave text, p_ventana bigint) returns int
+language sql security definer set search_path = public as $$
+  select incrementar_uso('notaria41', p_clave, p_ventana);
+$$;
+revoke execute on function incrementar_uso(text, bigint) from public, anon, authenticated;
+grant execute on function incrementar_uso(text, bigint) to service_role;
+
+alter table procesados add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+alter table procesados drop constraint if exists procesados_pkey;
+alter table procesados add constraint procesados_pkey primary key (notaria_id, wa_id);
+alter table auditoria add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+create index if not exists auditoria_notaria_creado on auditoria (notaria_id, creado desc);
+alter table consentimientos add column if not exists notaria_id text not null default 'notaria41' references notarias(id);
+create index if not exists consentimientos_notaria_titular on consentimientos (notaria_id, titular);
+
+-- 2026-10-19b: elimina las FK simples que quedaron reemplazadas por las compuestas. Mantener ambas hace que
+-- PostgREST encuentre dos relaciones posibles para los embeds; las compuestas conservan la misma cascada y además
+-- impiden asociar una fila hija con una conversación o sesión de otra notaría.
+alter table solicitudes_cita drop constraint if exists solicitudes_cita_conversacion_id_fkey;
+alter table sesiones drop constraint if exists sesiones_conversacion_id_fkey;
+alter table mensajes drop constraint if exists mensajes_conversacion_id_fkey;
+alter table mensajes drop constraint if exists mensajes_sesion_id_fkey;
+alter table pendientes drop constraint if exists pendientes_conversacion_id_fkey;
+alter table archivos drop constraint if exists archivos_conversacion_id_fkey;
+alter table documentos drop constraint if exists documentos_conversacion_id_fkey;

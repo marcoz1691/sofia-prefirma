@@ -43,6 +43,10 @@ it("contra CSRF: el POST exige JSON, X-Sofia y el mismo origen", () => {
   const post = (headers) => new Request("https://sitio.test/api/cuenta", { method: "POST", headers, body: "{}" });
   expect(mismoOrigen(post({ "content-type": "application/json", "x-sofia": "1", origin: "https://sitio.test" }))).toBe(true);
   expect(mismoOrigen(post({ "content-type": "application/json", "x-sofia": "1", origin: "https://malo.test" }))).toBe(false);
+  expect(mismoOrigen(post({ "content-type": "application/json", "x-sofia": "1", origin: "https://sitio.test", "sec-fetch-site": "cross-site" }))).toBe(false);
+  expect(mismoOrigen(post({ "content-type": "application/json", "x-sofia": "1", origin: "https://sitio.test", "sec-fetch-site": "same-origin" }))).toBe(true);
+  expect(mismoOrigen(post({ "content-type": "application/json", "x-sofia": "1" }))).toBe(false);
+  expect(mismoOrigen(post({ "content-type": "application/json", "x-sofia": "1", origin: "null" }))).toBe(false);
   expect(mismoOrigen(post({ "content-type": "text/plain", "x-sofia": "1" }))).toBe(false);
   expect(mismoOrigen(post({ "content-type": "application/json" }))).toBe(false);
   expect(mismoOrigen(new Request("https://sitio.test/api/cuenta"))).toBe(true);

@@ -7,23 +7,26 @@ Hoy la plataforma tiene una sola notaría operativa (`notaria41`) como piloto. E
 - La tabla `notarias` lista las notarías. Su `id` es un texto corto (`notaria41`).
 - **La notaría la decide el servidor** a partir de `NOTARIA_ID` en un proyecto dedicado o del subdominio `*.sofiaprefirma.com` (`api/_lib/notaria.js`, `notariaDe`). Nunca se acepta desde el cuerpo ni desde parámetros del navegador.
 - RLS está activado en todas las tablas y no hay políticas: nadie con la clave pública puede leer ni escribir. El servidor usa `service_role`, que se salta RLS, así que **el aislamiento lo exige el código**: cada método del almacén del portal llama a `exigirNotaria` y filtra por `notaria_id` (y por `cliente_id` en todo lo del cliente). Lo ajeno responde 404, igual que lo inexistente.
-- Pruebas de acceso cruzado: `test/portal-almacen.contrato.test.js` (otra notaría y otro cliente).
+- El almacén del núcleo queda fijado a una notaría al arrancar. Conversaciones, panel, citas, documentos, precios, ajustes, métricas, auditoría, límites y retención filtran por ese `notaria_id`.
+- Pruebas de acceso cruzado: `test/portal-almacen.contrato.test.js`, `test/almacen-supabase-tenant.test.js`, `test/cuenta-http.test.js` y `test/pagos-http.test.js`.
 
 ## Inventario de tablas
 
 | Situación | Tablas |
 |---|---|
-| Ya tienen `notaria_id` | `conversaciones`, `solicitudes_cita`, `personal`, `clientes`, `cliente_codigos`, `cliente_sesiones`, `tramite_vinculaciones`, `tramite_eventos`, `pagos` |
-| La heredan por su conversación o su cita | `sesiones`, `mensajes`, `pendientes`, `archivos`, `documentos`, `pago_eventos` |
-| Globales hoy, por notaría más adelante | `precios`, `ajustes` (y los interruptores), `metricas_dia`, `auditoria`, `uso` (prefijos de clave), `consentimientos`, `procesados` |
+| Tienen `notaria_id` | `conversaciones`, `sesiones`, `mensajes`, `pendientes`, `archivos`, `documentos`, `solicitudes_cita`, `personal`, `clientes`, `cliente_codigos`, `cliente_sesiones`, `tramite_vinculaciones`, `tramite_eventos`, `pagos`, `precios`, `ajustes`, `metricas_dia`, `auditoria`, `uso`, `consentimientos`, `procesados` |
+| La heredan por su pago | `pago_eventos` |
+
+La migración expansiva del 19 de octubre de 2026 conserva temporalmente el valor predeterminado `notaria41` y las funciones SQL antiguas de métricas y límites. Esto permite que el backend institucional anterior siga funcionando mientras comparte la base. Esos puentes se retiran únicamente después de actualizar y verificar ambos despliegues.
 
 ## Lo que falta para la segunda notaría
 
-1. Restricciones únicas por notaría: `conversaciones (notaria_id, telefono)` y `solicitudes_cita (notaria_id, fecha, codigo)`.
-2. `personal` con pertenencia por notaría (hoy la llave es el correo).
-3. Archivos en `<notaria_id>/<conversacion_id>/…` y URL firmadas solo tras comprobar en el servidor que el documento es de esa notaría.
-4. Un número de WhatsApp, una hoja de contenido y una sal de huellas por notaría.
-5. Crear el registro DNS y agregar a Vercel cada subdominio, por ejemplo `notaria41.sofiaprefirma.com`. El código ya lo resuelve; falta la configuración externa.
+1. Un proyecto o configuración de ejecución fijado con `NOTARIA_ID`; no abrir hosts desconocidos ni previews sin tenant explícito.
+2. Un número de WhatsApp, una fuente de contenido, secretos y remitente de correo por notaría.
+3. Personalización de marca y catálogo sin editar archivos compartidos.
+4. Pruebas integradas contra una base de ensayo con dos notarías antes de ingresar datos reales de la segunda.
+5. Retirar los defaults y funciones SQL de compatibilidad de `notaria41` después del corte del backend anterior.
+6. Crear el registro DNS y agregar a Vercel cada subdominio.
 
 ## Personalización futura (no disponible todavía)
 

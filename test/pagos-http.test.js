@@ -54,6 +54,19 @@ describe("pagos de trámites", () => {
     expect((await almacen.tramiteDeCliente(N, (await almacen.pagoPorId(N, b.pagoId)).clienteId, cita.id)).pagos).toHaveLength(1);
   });
 
+  it("no permite iniciar ni consultar pagos desde la sesión de otra notaría", async () => {
+    const iniciado = await (await api.POST(post({ accion: "iniciar", id: cita.id, idempotencia: "clave-aislada-0001" }, cookie))).json();
+    const otra = await almacen.crearCliente({ notariaId: "notaria-sur", email: "ana@example.test", emailVerificadoEn: new Date().toISOString() });
+    const cookieOtra = (await abrirSesion({ almacen, notariaId: "notaria-sur", clienteId: otra.id })).split(";")[0];
+    const host = "notaria-sur.sofiaprefirma.com";
+    const inicioAjeno = new Request(`https://${host}/api/pagos`, { method: "POST", headers: {
+      "content-type": "application/json", "x-sofia": "1", origin: `https://${host}`, cookie: cookieOtra
+    }, body: JSON.stringify({ accion: "iniciar", id: cita.id, idempotencia: "clave-aislada-0002" }) });
+    expect((await api.POST(inicioAjeno)).status).toBe(404);
+    const consultaAjena = new Request(`https://${host}/api/pagos?accion=estado&id=${iniciado.pagoId}`, { headers: { cookie: cookieOtra } });
+    expect((await api.GET(consultaAjena)).status).toBe(404);
+  });
+
   it("solo un webhook firmado cambia el estado y una entrega repetida es idempotente", async () => {
     const iniciado = await (await api.POST(post({ accion: "iniciar", id: cita.id, idempotencia: "clave-unica-0003" }, cookie))).json();
     const pago = await almacen.pagoPorId(N, iniciado.pagoId);

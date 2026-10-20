@@ -51,24 +51,26 @@ El nivel 1 puede iniciar antes. El nivel 2 es obligatorio antes de incorporar un
 - Cálculo de pagos en servidor, idempotencia y webhook firmado como base técnica.
 - Interruptores `portal`, `documentos` y `pagosEnLinea`; portal y pagos nacen apagados.
 - Migración de cuentas, sesiones, vínculos, eventos y pagos preparada en `supabase/esquema.sql`.
-- 569 pruebas unitarias y 213 pruebas E2E aprobadas con la barrera de despliegue.
+- 576 pruebas unitarias y 213 pruebas E2E aprobadas con la barrera de despliegue.
 - `sofiaprefirma.com` y `www.sofiaprefirma.com` sirven la portada comercial desde el proyecto `sofiaprefirma`, sin autenticación de Vercel.
 - Proyecto aislado `sofiaprefirma-notaria41` creado con `projectId` `prj_upo2XAFcjMVTjEVgp9tE2l8ECukg`.
 - Deployment `dpl_4kdYCZ2MPcYMy8DuCSEjzgiH9SpV` creado sin dominio personalizado; permanece protegido por Vercel Authentication en modo `all`.
 - Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA están configurados en producción y previews del piloto; sus definiciones de cron están vacías hasta el corte operativo.
 - Respaldo verificable previo a la migración guardado fuera del repositorio; incluye los esquemas `public`, `auth` y `storage` y tiene hashes SHA-256 registrados localmente.
-- Bloques de métricas, perfil notario y consentimientos verificados; bloque del portal del 2026-10-18 aplicado el 19 de octubre de 2026 dentro de una transacción.
+- Bloques de métricas, perfil notario y consentimientos verificados; bloques del portal del 2026-10-18, aislamiento multitenant del 2026-10-19 y limpieza de FK redundantes del 2026-10-19b aplicados dentro de transacciones.
+- La migración del 2026-10-19 separa núcleo, panel, documentos, precios, ajustes, métricas, auditoría y límites; conserva compatibilidad temporal para el backend anterior de `notaria41`.
+- Workflow de GitHub Actions preparado con pruebas unitarias y E2E para poder exigir checks en `main` después del primer pull request.
 - `portal`, `documentos` y `pagosEnLinea` están fijados en `0`; `/api/cuenta` devuelve 503 mientras el piloto está en preparación.
 
 ### Bloqueos actuales
 
 - El checkout principal continúa vinculado en `.vercel/project.json` a `notaria41`.
-- El repositorio independiente `marcoz1691/sofia-prefirma` existe; `main` y `claude/portal-base` apuntan al commit `7e8d869`. Falta proteger `main` en GitHub.
+- El repositorio independiente `marcoz1691/sofia-prefirma` existe y la rama de trabajo es `claude/portal-base`. Falta autenticar GitHub CLI y proteger `main` después de que aparezcan los nuevos checks de CI.
 - El proyecto comercial de Vercel está conectado a ese repositorio y a `main`; el piloto queda deliberadamente sin conexión Git automática hasta tener una rama de producción sin cron jobs.
 - La contraseña de base debe rotarse antes de abrir el piloto porque una herramienta la mostró en la salida local de diagnóstico; después se actualiza `.env.local`.
 - `.shots.mjs` y el repositorio anidado y vacío `inmobiliaria/` siguen ajenos y sin seguimiento; no deben incluirse.
-- El núcleo histórico —panel, conversaciones, citas y documentos— todavía tiene consultas globales.
-- Precios, ajustes, interruptores, contenido, métricas, auditoría y algunos límites siguen siendo globales.
+- La fuente de contenido y la configuración de WhatsApp todavía son únicas por despliegue; antes de una segunda notaría deben configurarse como recursos propios del tenant.
+- Los defaults SQL de compatibilidad para `notaria41` deben retirarse después de actualizar y verificar el backend institucional anterior.
 - Los archivos no tienen cuarentena ni análisis antimalware.
 - No existe una pasarela real ni interfaz de pago lista para producción.
 
@@ -102,6 +104,7 @@ Prioridad: **crítica**.
 - [x] Crear un respaldo verificable de Supabase antes de migrar.
 - [x] Registrar cada bloque SQL aplicado y su fecha; no ejecutar migraciones a ciegas.
 - [x] Aplicar, en orden, métricas y perfil notario del 2026-10-11, consentimientos del 2026-10-16 y portal del 2026-10-18.
+- [x] Respaldar y aplicar en una transacción el aislamiento multitenant del 2026-10-19 sin interrumpir el backend anterior.
 - [ ] Configurar en el proyecto piloto: Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, Resend, remitente, `SITIO_URL`, retención, MFA y secretos de cron.
 - [x] Exigir un `CUENTA_SECRETO` aleatorio de al menos 32 bytes y documentar su rotación.
 - [ ] Verificar `sofiaprefirma.com` en Resend y probar entrega, demora y carpeta de spam.
@@ -118,16 +121,17 @@ Prioridad: **crítica**.
 
 Prioridad: **crítica/alta**.
 
-- [ ] Usar el proyecto dedicado del piloto con `NOTARIA_ID=notaria41`.
-- [ ] Hacer que APIs de marketing, previews y hosts desconocidos fallen cerradas; nunca deben caer por defecto en Notaría 41.
-- [ ] Propagar el tenant desde la entrada hasta creación de conversación, cita, evento y vínculo.
-- [ ] Añadir `notariaId` obligatorio al panel, agenda y documentos, no solo al portal.
-- [ ] Comprobar tenant y autorización antes de generar una URL firmada de documento.
+- [x] Usar el proyecto dedicado del piloto con `NOTARIA_ID=notaria41`.
+- [x] Hacer que producción falle cerrada sin `NOTARIA_ID` o ante hosts desconocidos; nunca cae por defecto en Notaría 41.
+- [x] Propagar el tenant del despliegue hasta creación de conversación, cita, evento y vínculo.
+- [x] Añadir `notaria_id` al núcleo, panel, agenda, documentos, precios, ajustes, métricas, auditoría y límites.
+- [x] Comprobar tenant y autorización antes de generar una URL firmada de documento.
 - [ ] Añadir pruebas de que notas internas nunca llegan a portal, correo o WhatsApp.
 - [ ] Validar la IP proporcionada por Vercel y usar HMAC secreto para las huellas y límites.
-- [ ] Tenantizar las cuotas de OTP y vinculación.
-- [ ] Endurecer solicitudes mutables con origen exacto y señales `Sec-Fetch-Site` cuando estén presentes.
-- [ ] Ejecutar `npm audit`, revisar dependencias y comprobar cabeceras en el deployment real.
+- [x] Tenantizar las cuotas de OTP y vinculación.
+- [x] Exigir JSON, `X-Sofia`, `Origin` exacto y `Sec-Fetch-Site: same-origin` cuando esté presente en las solicitudes mutables del portal.
+- [x] Ejecutar `npm audit` para dependencias de producción: 0 vulnerabilidades el 19 de octubre de 2026.
+- [ ] Comprobar nuevamente cabeceras y aislamiento en el deployment nuevo.
 - [ ] Mantener pagos apagados.
 - [ ] Mantener documentos apagados hasta completar la siguiente fase.
 
@@ -137,7 +141,7 @@ Prioridad: **crítica/alta**.
 
 Prioridad: **alta**; bloquea documentos reales.
 
-- [ ] Guardar cada objeto bajo `<notaria_id>/<conversacion_id>/...`.
+- [x] Guardar cada objeto nuevo bajo `<notaria_id>/<conversacion_id>/...`.
 - [ ] Subir primero a cuarentena.
 - [ ] Integrar análisis antimalware y, para PDF, sanitización/CDR cuando corresponda.
 - [ ] No mostrar ni firmar archivos hasta que el resultado sea limpio.

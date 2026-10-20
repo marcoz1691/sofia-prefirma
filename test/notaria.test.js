@@ -17,5 +17,10 @@ describe("resolución de notaría", () => {
 
   it.each(["www.sofiaprefirma.com", "portal.sofiaprefirma.com", "a.b.sofiaprefirma.com", "sitio.test"])("no convierte un host reservado o inválido en notaría: %s", (host) => {
     expect(notariaDe(pedido(host), {})).toBe(NOTARIA_POR_DEFECTO);
+    expect(() => notariaDe(pedido(host), { VERCEL_ENV: "production" })).toThrow(/determinar la notaría/);
+  });
+
+  it("rechaza una NOTARIA_ID inválida en vez de ignorarla", () => {
+    expect(() => notariaDe(pedido("notaria41.sofiaprefirma.com"), { NOTARIA_ID: "../otra" })).toThrow(/NOTARIA_ID/);
   });
 });

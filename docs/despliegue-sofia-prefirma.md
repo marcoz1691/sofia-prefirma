@@ -23,7 +23,7 @@ El producto se llama **Sofía PreFirma**. La Notaría 41 de Quito es su primer p
 
 ## Antes de habilitar el portal
 
-1. El bloque del **2026-10-18** de `supabase/esquema.sql` se aplicó el 19 de octubre de 2026 después de crear un respaldo verificable.
+1. Los bloques del **2026-10-18** y **2026-10-19** de `supabase/esquema.sql` se aplicaron el 19 de octubre de 2026, cada uno después de crear un respaldo verificable. El segundo es expansivo y mantiene compatibilidad temporal con el backend institucional anterior.
 2. En `sofiaprefirma-notaria41` ya están configurados Supabase, `NOTARIA_ID`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA. Faltan `RESEND_API_KEY` y `CORREO_REMITENTE`.
 3. Verificar `sofiaprefirma.com` en el proveedor de correo.
 4. Probar código de acceso, cierre de sesión, vínculo de una cita, aislamiento entre clientes y carga de documentos.
@@ -39,6 +39,8 @@ El destino recomendado para el portal de la primera notaría es `notaria41.sofia
 - Piloto aislado de preparación: deployment `dpl_4kdYCZ2MPcYMy8DuCSEjzgiH9SpV`; permanece protegido en modo Vercel Authentication `all` y sin dominio personalizado. Tiene Supabase, `NOTARIA_ID=notaria41`, secreto de cuenta, retención y MFA.
 - El deployment de preparación se publicó sin definiciones de cron. `portal`, `documentos` y `pagosEnLinea` están fijados en `0`; no se restauran cron jobs hasta configurar `CRON_SECRET` y ejecutar el corte del único backend operativo.
 - Supabase Auth permite las URLs del panel piloto sin reemplazar la URL principal del panel institucional.
+- El respaldo inmediatamente anterior al aislamiento multitenant está en `~/Documents/Respaldos-Sofia-Prefirma/2026-10-19-pre-multitenant/`; sus dos archivos tienen permisos `600` y hashes SHA-256 verificados.
+- La migración multitenant quedó verificada con 12 tablas tenantizadas, 7 llaves foráneas compuestas y las dos firmas —nueva y compatible— de las funciones de métricas y límites. El bloque `2026-10-19b` retiró las FK simples redundantes para que PostgREST tenga una sola relación posible por embed.
 - La contraseña de base debe rotarse antes de abrir el piloto porque apareció en la salida local de una comprobación de respaldo; después hay que actualizar `.env.local` y cualquier variable que la use.
 - Antes de promover otra versión, conserva el ID del deployment que atiende cada dominio.
 - Para volver a la versión comercial validada, usa `vercel promote dpl_6VhdaVfgNCZ2DZeL8wE4vnaRcb8N --yes` desde un checkout que haya pasado `npm run vercel:verificar:comercial`.

@@ -45,6 +45,10 @@ export function mismoOrigen(request) {
   if (request.method !== "POST") return true;
   if (!(request.headers.get("content-type") || "").startsWith("application/json")) return false;
   if (request.headers.get("x-sofia") !== "1") return false;
+  const sitio = request.headers.get("sec-fetch-site");
+  if (sitio && sitio !== "same-origin") return false;
   const origen = request.headers.get("origin");
-  return !origen || origen === new URL(request.url).origin;
+  // Los POST del portal nacen siempre en el navegador. Fallar cerrado cuando Origin falta evita que una
+  // configuración intermedia convierta la cabecera X-Sofia en el único control contra CSRF.
+  return !!origen && origen !== "null" && origen === new URL(request.url).origin;
 }

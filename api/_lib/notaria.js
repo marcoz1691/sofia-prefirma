@@ -9,6 +9,7 @@ const hostDe = (request) => {
 };
 
 export function notariaDe(request, env = process.env) {
+  if (env.NOTARIA_ID !== undefined && !idValido(env.NOTARIA_ID)) throw new Error("NOTARIA_ID no es válida");
   if (idValido(env.NOTARIA_ID)) return env.NOTARIA_ID;
   const host = hostDe(request);
   // En la plataforma, cada subdominio de notaría resuelve a su identificador. Los subdominios reservados siguen
@@ -18,6 +19,9 @@ export function notariaDe(request, env = process.env) {
     const subdominio = host.slice(0, -sufijo.length);
     if (!subdominio.includes(".") && !["www", "app", "portal"].includes(subdominio) && idValido(subdominio)) return subdominio;
   }
+  // El valor por defecto facilita pruebas y desarrollo local. En producción, un host reservado, una preview o un
+  // dominio desconocido nunca debe caer silenciosamente en los datos del piloto.
+  if (env.VERCEL_ENV === "production") throw new Error("No se pudo determinar la notaría para este host");
   return NOTARIA_POR_DEFECTO;
 }
 

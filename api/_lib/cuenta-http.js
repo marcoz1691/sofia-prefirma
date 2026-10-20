@@ -39,6 +39,8 @@ const json = (data, status = 200, extra = {}) =>
 const iso = (ms) => new Date(ms).toISOString();
 const normalizarCorreo = (v) => (typeof v === "string" ? v.trim().toLowerCase() : "");
 const correoValido = (e) => e.length <= 254 && /^[^\s@\u0000-\u001f\u007f]+@[^\s@\u0000-\u001f\u007f]+\.[^\s@.\u0000-\u001f\u007f]{2,}$/.test(e);
+const secretoValido = (v) => typeof v === "string" && Buffer.byteLength(v, "utf8") >= 32;
+const cuota = (notariaId, nombre, sujeto = "") => `cuenta:${notariaId}:${nombre}${sujeto ? ":" + sujeto : ""}`;
 // Los trámites son uuid en Supabase; en memoria, números. Cualquier otra cosa no llega al almacén.
 const idValido = (id) => typeof id === "string" && /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{1,12})$/i.test(id);
 const textoCorto = (v) => (typeof v === "string" && !/[\u0000-\u001f\u007f]/.test(v) && v.trim().length >= 1 && v.trim().length <= 80 ? v.trim().replace(/ +/g, " ") : null);
@@ -84,16 +86,16 @@ export function crearManejadorCuenta({ almacen, correo, contenido, ahora = () =>
   };
 
   async function pedirCodigo(request, b, t) {
-    if (!correo || !secreto) return json({ error: NO_DISPONIBLE }, 503);
+    if (!correo || !secretoValido(secreto)) return json({ error: NO_DISPONIBLE }, 503);
     const email = normalizarCorreo(b.email);
     if (!correoValido(email)) return json({ error: "Escribe un correo válido." }, 400);
     const notariaId = notariaDe(request), destinoHuella = destino(notariaId, email), ipHuella = huellaIp(request);
-    if (await excede("cuenta:codigo-ip:" + ipHuella, HORA, limites.codigoPorIp, t)) return json({ error: MUCHOS }, 429);
+    if (await excede(cuota(notariaId, "codigo-ip", ipHuella), HORA, limites.codigoPorIp, t)) return json({ error: MUCHOS }, 429);
     // Siempre la misma respuesta, exista o no la cuenta, y aunque se haya pasado del límite o esté en espera: no revela nada.
     const aceptado = () => json({ mensaje: ENVIADO }, 202);
     const [porCorreo, porDia] = await Promise.all([
-      excede("cuenta:codigo:" + destinoHuella.slice(0, 32), HORA, limites.codigoPorCorreo, t),
-      excede("cuenta:codigo-dia", DIA, limites.codigoPorDia, t)
+      excede(cuota(notariaId, "codigo", destinoHuella.slice(0, 32)), HORA, limites.codigoPorCorreo, t),
+      excede(cuota(notariaId, "codigo-dia"), DIA, limites.codigoPorDia, t)
     ]);
     if (porCorreo || porDia) return aceptado();
     const ultimo = await almacen.ultimoCodigoCliente({ notariaId, destinoHuella });
@@ -108,13 +110,13 @@ export function crearManejadorCuenta({ almacen, correo, contenido, ahora = () =>
   }
 
   async function verificar(request, b, t) {
-    if (!secreto) return json({ error: NO_DISPONIBLE }, 503);
-    if (await excede("cuenta:verificar-ip:" + huellaIp(request), HORA, limites.verificarPorIp, t)) return json({ error: MUCHOS }, 429);
+    if (!secretoValido(secreto)) return json({ error: NO_DISPONIBLE }, 503);
+    const notariaId = notariaDe(request);
+    if (await excede(cuota(notariaId, "verificar-ip", huellaIp(request)), HORA, limites.verificarPorIp, t)) return json({ error: MUCHOS }, 429);
     // Un solo mensaje para todo fallo: código mal escrito, incorrecto, vencido, usado, anulado o cuenta bloqueada.
     const fallo = () => json({ error: CODIGO_MAL }, 400);
     const email = normalizarCorreo(b.email), codigo = typeof b.codigo === "string" ? b.codigo.replace(/\s/g, "") : "";
     if (!correoValido(email) || !/^\d{6}$/.test(codigo)) return fallo();
-    const notariaId = notariaDe(request);
     const valido = await almacen.consumirCodigoCliente({ notariaId, destinoHuella: destino(notariaId, email), codigoHmac: hmac(notariaId + "|" + email + "|" + codigo), ahora: t });
     if (!valido) return fallo();
     let cliente = await almacen.clientePorEmail(notariaId, email);
@@ -174,7 +176,7 @@ export function crearManejadorCuenta({ almacen, correo, contenido, ahora = () =>
     if (!idValido(b.id)) return json({ error: SIN_TRAMITE }, 404);
     const descripcion = limpiarDescripcion(b.descripcion);
     if (!descripcion) return json({ error: ERROR_DESCRIPCION }, 400);
-    if (await excede("cuenta:docs:" + cliente.id, HORA, limites.docsPorCliente, t)) return json({ error: "Has enviado muchos documentos. Inténtalo de nuevo en una hora." }, 429);
+    if (await excede(cuota(notariaId, "docs", cliente.id), HORA, limites.docsPorCliente, t)) return json({ error: "Has enviado muchos documentos. Inténtalo de nuevo en una hora." }, 429);
     const tramite = await almacen.tramiteDeCliente(notariaId, cliente.id, b.id);
     if (!tramite) return json({ error: SIN_TRAMITE }, 404);
     if (!VIGENTES.includes(tramite.estado) || tramite.fecha < fechaQuito(new Date(t))) return json({ error: "Este trámite ya no recibe documentos. Escríbenos por WhatsApp si necesitas ayuda." }, 409);
@@ -191,8 +193,8 @@ export function crearManejadorCuenta({ almacen, correo, contenido, ahora = () =>
 
   const vincular = conSesion(async ({ request, b, t, notariaId, cliente }) => {
     const [porCliente, porIp] = await Promise.all([
-      excede("cuenta:vincular:" + cliente.id, HORA, limites.vincularPorCliente, t),
-      excede("cuenta:vincular-ip:" + huellaIp(request), HORA, limites.vincularPorIp, t)
+      excede(cuota(notariaId, "vincular", cliente.id), HORA, limites.vincularPorCliente, t),
+      excede(cuota(notariaId, "vincular-ip", huellaIp(request)), HORA, limites.vincularPorIp, t)
     ]);
     if (porCliente || porIp) return json({ error: MUCHOS }, 429);
     const id = await consumirVinculo({ almacen, notariaId, clienteId: cliente.id, token: b.token, ahora: t });

@@ -4,37 +4,39 @@ import { createClient } from "@supabase/supabase-js";
 import { nuevoCodigo } from "./tickets.js";
 import { crearPortalSupabase } from "./portal-supabase.js";
 import { textoVisible } from "./mensajes.js";
+import { exigirNotaria, NOTARIA_POR_DEFECTO } from "./notaria.js";
 
 const BUCKET = "documentos";
 
-export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo } = {}) {
+export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo, notariaId = NOTARIA_POR_DEFECTO } = {}) {
   const db = cliente || createClient(url, clave, { auth: { persistSession: false } });
+  const notaria = exigirNotaria(notariaId);
   const ok = ({ data, error }) => { if (error) throw new Error(`Supabase: ${error.message}`); return data; };
   const conv = (r) => r && { id: r.id, telefono: r.telefono, nombre: r.nombre, consentimiento: r.consentimiento, derivada: r.derivada,
-    consentimientoTexto: r.consentimiento_texto || "", consentimientoAviso: r.consentimiento_aviso || "" };
-  const cita = (r) => r && { id: r.id, conversacionId: r.conversacion_id, codigo: r.codigo ?? null, tramiteId: r.tramite_id, fecha: r.fecha, hora: r.hora, nombre: r.nombre, nota: r.nota, estado: r.estado, motivo: r.motivo, contacto: r.contacto || null, asignadaA: r.asignada_a || "" , notariaId: r.notaria_id || "notaria41", clienteId: r.cliente_id ?? null };
+    consentimientoTexto: r.consentimiento_texto || "", consentimientoAviso: r.consentimiento_aviso || "", notariaId: r.notaria_id || notaria };
+  const cita = (r) => r && { id: r.id, conversacionId: r.conversacion_id, codigo: r.codigo ?? null, tramiteId: r.tramite_id, fecha: r.fecha, hora: r.hora, nombre: r.nombre, nota: r.nota, estado: r.estado, motivo: r.motivo, contacto: r.contacto || null, asignadaA: r.asignada_a || "" , notariaId: r.notaria_id || notaria, clienteId: r.cliente_id ?? null };
   const doc = (r) => ({ id: r.id, conversacionId: r.conversacion_id, mediaId: r.media_id, nombre: r.nombre, mime: r.mime, descripcion: r.descripcion, tramiteId: r.tramite_id,
     estado: r.estado, nota: r.nota, observacionCliente: r.observacion_cliente || "", solicitudId: r.solicitud_id ?? null, creado: Date.parse(r.creado) });
-  const mensajesDe = async (filtro, valor) => ok(await db.from("mensajes").select("contenido").eq(filtro, valor).order("id")).map((m) => m.contenido);
+  const mensajesDe = async (filtro, valor) => ok(await db.from("mensajes").select("contenido").eq("notaria_id", notaria).eq(filtro, valor).order("id")).map((m) => m.contenido);
 
   return {
     // Portal de clientes (Sofía PreFirma), en su propio módulo.
-    ...crearPortalSupabase(db, ok),
-    async precios() { return ok(await db.from("precios").select("*")).map((p) => ({ tramiteId: p.tramite_id, tipo: p.tipo, valor: p.valor === null ? null : Number(p.valor), unidad: p.unidad, tabla: p.tabla, actualizadoPor: p.actualizado_por, actualizadoEn: p.actualizado_en })); },
-    async guardarPrecio(p) { ok(await db.from("precios").upsert({ tramite_id: p.tramiteId, tipo: p.tipo, valor: p.valor ?? null, unidad: p.unidad || "", tabla: p.tabla || "", actualizado_por: p.actualizadoPor || "", actualizado_en: new Date().toISOString() })); },
-    async restaurarPrecio(id) { ok(await db.from("precios").delete().eq("tramite_id", id)); },
-    async ajustes() { return Object.fromEntries(ok(await db.from("ajustes").select("clave, valor")).map((p) => [p.clave, p.clave === "sbu" ? Number(p.valor) : p.valor])); },
-    async ajustesConDetalle() { return ok(await db.from("ajustes").select("clave, valor, actualizado_por, actualizado_en")).map(r => ({ clave: r.clave, valor: r.valor, actualizadoPor: r.actualizado_por || "", actualizadoEn: r.actualizado_en || "" })); },
-    async sumarMetrica(fecha, clave, valor) { ok(await db.rpc("sumar_metrica", { p_fecha: fecha, p_clave: clave, p_valor: valor })); },
-    async metricas(desde, hasta) { return ok(await db.from("metricas_dia").select("fecha, clave, valor").gte("fecha", desde).lte("fecha", hasta).order("fecha").order("clave")).map(r => ({ ...r, valor: Number(r.valor) })); },
-    async restaurarAjuste(clave) { ok(await db.from("ajustes").delete().eq("clave", clave)); },
-    async guardarAjuste(clave, valor, por) { ok(await db.from("ajustes").upsert({ clave, valor: String(valor), actualizado_por: por, actualizado_en: new Date().toISOString() })); },
-    async rolDe(email) { return ok(await db.from("personal").select("rol").eq("email", String(email || "").toLowerCase()).maybeSingle())?.rol || null; },
+    ...crearPortalSupabase(db, ok, notaria),
+    async precios() { return ok(await db.from("precios").select("*").eq("notaria_id", notaria)).map((p) => ({ tramiteId: p.tramite_id, tipo: p.tipo, valor: p.valor === null ? null : Number(p.valor), unidad: p.unidad, tabla: p.tabla, actualizadoPor: p.actualizado_por, actualizadoEn: p.actualizado_en })); },
+    async guardarPrecio(p) { ok(await db.from("precios").upsert({ notaria_id: notaria, tramite_id: p.tramiteId, tipo: p.tipo, valor: p.valor ?? null, unidad: p.unidad || "", tabla: p.tabla || "", actualizado_por: p.actualizadoPor || "", actualizado_en: new Date().toISOString() }, { onConflict: "notaria_id,tramite_id" })); },
+    async restaurarPrecio(id) { ok(await db.from("precios").delete().eq("notaria_id", notaria).eq("tramite_id", id)); },
+    async ajustes() { return Object.fromEntries(ok(await db.from("ajustes").select("clave, valor").eq("notaria_id", notaria)).map((p) => [p.clave, p.clave === "sbu" ? Number(p.valor) : p.valor])); },
+    async ajustesConDetalle() { return ok(await db.from("ajustes").select("clave, valor, actualizado_por, actualizado_en").eq("notaria_id", notaria)).map(r => ({ clave: r.clave, valor: r.valor, actualizadoPor: r.actualizado_por || "", actualizadoEn: r.actualizado_en || "" })); },
+    async sumarMetrica(fecha, clave, valor) { ok(await db.rpc("sumar_metrica", { p_notaria: notaria, p_fecha: fecha, p_clave: clave, p_valor: valor })); },
+    async metricas(desde, hasta) { return ok(await db.from("metricas_dia").select("fecha, clave, valor").eq("notaria_id", notaria).gte("fecha", desde).lte("fecha", hasta).order("fecha").order("clave")).map(r => ({ fecha: r.fecha, clave: r.clave, valor: Number(r.valor) })); },
+    async restaurarAjuste(clave) { ok(await db.from("ajustes").delete().eq("notaria_id", notaria).eq("clave", clave)); },
+    async guardarAjuste(clave, valor, por) { ok(await db.from("ajustes").upsert({ notaria_id: notaria, clave, valor: String(valor), actualizado_por: por, actualizado_en: new Date().toISOString() }, { onConflict: "notaria_id,clave" })); },
+    async rolDe(email) { return ok(await db.from("personal").select("rol").eq("notaria_id", notaria).eq("email", String(email || "").toLowerCase()).maybeSingle())?.rol || null; },
     async esAdmin(email) { return await this.rolDe(email) === "admin"; },
-    async equipo() { return ok(await db.from("personal").select("email,nombre,rol,mfa_en,creado").order("nombre")).map(({ mfa_en, ...p }) => ({ ...p, dosPasos: mfa_en != null })); },
-    async agregarMiembro(p) { const { error } = await db.from("personal").insert(p); if (error) throw Object.assign(new Error(error.message), { code: error.code }); },
-    async quitarMiembro(email) { ok(await db.from("personal").delete().eq("email", email)); },
-    async cambiarRol(email, rol) { ok(await db.from("personal").update({ rol }).eq("email", email)); },
+    async equipo() { return ok(await db.from("personal").select("email,nombre,rol,mfa_en,creado").eq("notaria_id", notaria).order("nombre")).map(({ mfa_en, ...p }) => ({ ...p, dosPasos: mfa_en != null })); },
+    async agregarMiembro(p) { const { error } = await db.from("personal").insert({ ...p, notaria_id: notaria }); if (error) throw Object.assign(new Error(error.message), { code: error.code }); },
+    async quitarMiembro(email) { ok(await db.from("personal").delete().eq("notaria_id", notaria).eq("email", email)); },
+    async cambiarRol(email, rol) { ok(await db.from("personal").update({ rol }).eq("notaria_id", notaria).eq("email", email)); },
     // «datos» queda en el usuario de Supabase y la plantilla del correo lo usa ({{ .Data.nombre }}, {{ .Data.perfil }}…).
     async invitar(email, redirectTo, datos) {
       const { error } = await db.auth.admin.inviteUserByEmail(email, { redirectTo, ...(datos ? { data: datos } : {}) });
@@ -43,25 +45,25 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
       return { yaTeniaCuenta: false };
     },
     async marcarProcesado(waId) {
-      const { error } = await db.from("procesados").insert({ wa_id: waId });
+      const { error } = await db.from("procesados").insert({ notaria_id: notaria, wa_id: waId });
       if (error?.code === "23505") return false;
       if (error) throw new Error(`Supabase: ${error.message}`);
       return true;
     },
 
     async conversacion(telefono, nombre) {
-      let r = ok(await db.from("conversaciones").select("*").eq("telefono", telefono).maybeSingle());
+      let r = ok(await db.from("conversaciones").select("*").eq("notaria_id", notaria).eq("telefono", telefono).maybeSingle());
       if (!r) {
-        const ins = await db.from("conversaciones").insert({ telefono, nombre: nombre || "" }).select().single();
-        r = ins.error?.code === "23505" ? ok(await db.from("conversaciones").select("*").eq("telefono", telefono).single()) : ok(ins);
+        const ins = await db.from("conversaciones").insert({ notaria_id: notaria, telefono, nombre: nombre || "" }).select().single();
+        r = ins.error?.code === "23505" ? ok(await db.from("conversaciones").select("*").eq("notaria_id", notaria).eq("telefono", telefono).single()) : ok(ins);
       } else if (nombre && !r.nombre) {
-        r = ok(await db.from("conversaciones").update({ nombre }).eq("id", r.id).select().single());
+        r = ok(await db.from("conversaciones").update({ nombre }).eq("notaria_id", notaria).eq("id", r.id).select().single());
       }
       return conv(r);
     },
     // Busca sin crear (conversacion() crea si no existe).
-    async conversacionPorTelefono(telefono) { return conv(ok(await db.from("conversaciones").select("*").eq("telefono", telefono).maybeSingle())); },
-    async conversacionPorId(id) { return conv(ok(await db.from("conversaciones").select("*").eq("id", id).maybeSingle())); },
+    async conversacionPorTelefono(telefono) { return conv(ok(await db.from("conversaciones").select("*").eq("notaria_id", notaria).eq("telefono", telefono).maybeSingle())); },
+    async conversacionPorId(id) { return conv(ok(await db.from("conversaciones").select("*").eq("notaria_id", notaria).eq("id", id).maybeSingle())); },
     async actualizarConversacion(id, cambios) {
       const fila = {};
       if ("derivada" in cambios) fila.derivada = cambios.derivada;
@@ -70,89 +72,89 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
       if ("consentimientoTexto" in cambios) fila.consentimiento_texto = cambios.consentimientoTexto;
       if ("consentimientoAviso" in cambios) fila.consentimiento_aviso = cambios.consentimientoAviso;
       if ("nombre" in cambios) fila.nombre = cambios.nombre;
-      ok(await db.from("conversaciones").update(fila).eq("id", id));
+      ok(await db.from("conversaciones").update(fila).eq("notaria_id", notaria).eq("id", id));
     },
     async resumenConversaciones() {
       const filas = ok(await db.from("conversaciones").select("id, nombre, telefono, derivada, ultimo_texto, ultima_actividad_ms, solicitudes_cita(count)")
-        .eq("solicitudes_cita.estado", "pendiente").order("ultima_actividad_ms", { ascending: false }).limit(200));
+        .eq("notaria_id", notaria).eq("solicitudes_cita.estado", "pendiente").order("ultima_actividad_ms", { ascending: false }).limit(200));
       return filas.map((r) => ({ id: r.id, nombre: r.nombre, telefono: r.telefono, derivada: r.derivada, ultimoTexto: r.ultimo_texto,
         ultimaActividad: Number(r.ultima_actividad_ms), citasPendientes: r.solicitudes_cita?.[0]?.count || 0 }));
     },
     async conversaciones() {
-      const filas = ok(await db.from("conversaciones").select("*, sesiones(ultima_ms)"));
+      const filas = ok(await db.from("conversaciones").select("*, sesiones(ultima_ms)").eq("notaria_id", notaria));
       return filas.map((r) => ({ ...conv(r), ultimaActividad: Math.max(0, ...(r.sesiones || []).map((s) => Number(s.ultima_ms))) }));
     },
 
     async sesionActiva(conversacionId, { ahora, sistema, inactividadMs, nueva = false }) {
-      let s = ok(await db.from("sesiones").select("*").eq("conversacion_id", conversacionId).order("creada", { ascending: false }).limit(1).maybeSingle());
+      let s = ok(await db.from("sesiones").select("*").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).order("creada", { ascending: false }).limit(1).maybeSingle());
       if (nueva || !s || ahora - Number(s.ultima_ms) > inactividadMs) {
-        s = ok(await db.from("sesiones").insert({ conversacion_id: conversacionId, sistema, ultima_ms: ahora }).select().single());
+        s = ok(await db.from("sesiones").insert({ notaria_id: notaria, conversacion_id: conversacionId, sistema, ultima_ms: ahora }).select().single());
         return { id: s.id, sistema: s.sistema, mensajes: [] };
       }
       return { id: s.id, sistema: s.sistema, mensajes: await mensajesDe("sesion_id", s.id) };
     },
     async sesionActual(conversacionId) {
-      const s = ok(await db.from("sesiones").select("*").eq("conversacion_id", conversacionId).order("creada", { ascending: false }).limit(1).maybeSingle());
+      const s = ok(await db.from("sesiones").select("*").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).order("creada", { ascending: false }).limit(1).maybeSingle());
       return s ? { id: s.id, sistema: s.sistema, mensajes: await mensajesDe("sesion_id", s.id) } : null;
     },
     async agregarMensajes(sesionId, mensajes, ahora) {
-      const s = ok(await db.from("sesiones").select("conversacion_id").eq("id", sesionId).single());
-      if (mensajes.length) ok(await db.from("mensajes").insert(mensajes.map((m) => ({ sesion_id: sesionId, conversacion_id: s.conversacion_id, rol: m.role, contenido: m }))));
-      ok(await db.from("sesiones").update({ ultima_ms: ahora }).eq("id", sesionId));
+      const s = ok(await db.from("sesiones").select("conversacion_id").eq("notaria_id", notaria).eq("id", sesionId).single());
+      if (mensajes.length) ok(await db.from("mensajes").insert(mensajes.map((m) => ({ notaria_id: notaria, sesion_id: sesionId, conversacion_id: s.conversacion_id, rol: m.role, contenido: m }))));
+      ok(await db.from("sesiones").update({ ultima_ms: ahora }).eq("notaria_id", notaria).eq("id", sesionId));
       const visible = mensajes.map(textoVisible).filter(Boolean).at(-1);
-      ok(await db.from("conversaciones").update({ ultima_actividad_ms: ahora, ...(visible ? { ultimo_texto: visible.texto.slice(0, 300) } : {}) }).eq("id", s.conversacion_id));
+      ok(await db.from("conversaciones").update({ ultima_actividad_ms: ahora, ...(visible ? { ultimo_texto: visible.texto.slice(0, 300) } : {}) }).eq("notaria_id", notaria).eq("id", s.conversacion_id));
     },
     async ultimoMensajeCliente(conversacionId) {
-      return Number(ok(await db.from("conversaciones").select("cliente_en_ms").eq("id", conversacionId).single()).cliente_en_ms);
+      return Number(ok(await db.from("conversaciones").select("cliente_en_ms").eq("notaria_id", notaria).eq("id", conversacionId).single()).cliente_en_ms);
     },
     async historial(conversacionId) { return mensajesDe("conversacion_id", conversacionId); },
     async marcarClienteEscribio(conversacionId, ms) {
-      ok(await db.from("conversaciones").update({ cliente_en_ms: ms }).eq("id", conversacionId).lt("cliente_en_ms", ms));
+      ok(await db.from("conversaciones").update({ cliente_en_ms: ms }).eq("notaria_id", notaria).eq("id", conversacionId).lt("cliente_en_ms", ms));
     },
 
     // Cola y turno por conversación. El turno se toma con una sola actualización condicional (atómica en Postgres).
-    async encolar(conversacionId, mensaje) { ok(await db.from("pendientes").insert({ conversacion_id: conversacionId, mensaje })); },
+    async encolar(conversacionId, mensaje) { ok(await db.from("pendientes").insert({ notaria_id: notaria, conversacion_id: conversacionId, mensaje })); },
     async pendientes(conversacionId) {
-      return ok(await db.from("pendientes").select("id, mensaje").eq("conversacion_id", conversacionId).order("id")).map((r) => ({ id: r.id, conversacionId, mensaje: r.mensaje }));
+      return ok(await db.from("pendientes").select("id, mensaje").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).order("id")).map((r) => ({ id: r.id, conversacionId, mensaje: r.mensaje }));
     },
-    async quitarPendientes(ids) { if (ids.length) ok(await db.from("pendientes").delete().in("id", ids)); },
+    async quitarPendientes(ids) { if (ids.length) ok(await db.from("pendientes").delete().eq("notaria_id", notaria).in("id", ids)); },
     async tomarTurno(conversacionId, ahora, duracionMs) {
-      return ok(await db.from("conversaciones").update({ turno_hasta_ms: ahora + duracionMs }).eq("id", conversacionId).lt("turno_hasta_ms", ahora).select("id")).length > 0;
+      return ok(await db.from("conversaciones").update({ turno_hasta_ms: ahora + duracionMs }).eq("notaria_id", notaria).eq("id", conversacionId).lt("turno_hasta_ms", ahora).select("id")).length > 0;
     },
-    async liberarTurno(conversacionId) { ok(await db.from("conversaciones").update({ turno_hasta_ms: 0 }).eq("id", conversacionId)); },
+    async liberarTurno(conversacionId) { ok(await db.from("conversaciones").update({ turno_hasta_ms: 0 }).eq("notaria_id", notaria).eq("id", conversacionId)); },
 
     async registrarArchivo(conversacionId, media) {
-      ok(await db.from("archivos").upsert({ id: media.id, conversacion_id: conversacionId, mime: media.mime || "", nombre: media.nombre || "" }));
+      ok(await db.from("archivos").upsert({ notaria_id: notaria, id: media.id, conversacion_id: conversacionId, mime: media.mime || "", nombre: media.nombre || "" }, { onConflict: "notaria_id,conversacion_id,id" }));
     },
     async archivoRecibido(conversacionId, mediaId) {
-      const r = ok(await db.from("archivos").select("*").eq("conversacion_id", conversacionId).eq("id", mediaId).maybeSingle());
+      const r = ok(await db.from("archivos").select("*").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).eq("id", mediaId).maybeSingle());
       return r ? { id: r.id, mime: r.mime, nombre: r.nombre } : null;
     },
 
     async guardarDocumento(d) {
-      const ruta = `${d.conversacionId}/${crypto.randomUUID()}-${(d.nombre || "archivo").replace(/[^\w.\-]+/g, "_")}`;
+      const ruta = `${notaria}/${d.conversacionId}/${crypto.randomUUID()}-${(d.nombre || "archivo").replace(/[^\w.\-]+/g, "_")}`;
       ok(await db.storage.from(BUCKET).upload(ruta, d.bytes, { contentType: d.mime || "application/octet-stream" }));
       const r = ok(await db.from("documentos").insert({ conversacion_id: d.conversacionId, media_id: d.mediaId, nombre: d.nombre || "", mime: d.mime || "",
-        ruta, descripcion: d.descripcion || "", tramite_id: d.tramiteId || null, ...(d.solicitudId ? { solicitud_id: d.solicitudId } : {}) }).select("id").single());
+        notaria_id: notaria, ruta, descripcion: d.descripcion || "", tramite_id: d.tramiteId || null, ...(d.solicitudId ? { solicitud_id: d.solicitudId } : {}) }).select("id").single());
       return { id: r.id };
     },
-    async documento(id) { const r = ok(await db.from("documentos").select("*").eq("id", id).is("borrado_en", null).maybeSingle()); return r ? doc(r) : null; },
+    async documento(id) { const r = ok(await db.from("documentos").select("*").eq("notaria_id", notaria).eq("id", id).is("borrado_en", null).maybeSingle()); return r ? doc(r) : null; },
     // «nota» es interna (solo personal); «observacionCliente» la ve el cliente en su portal.
-    async revisarDocumento(id, { estado, nota = "", observacionCliente }) { ok(await db.from("documentos").update({ estado, nota, ...(observacionCliente !== undefined ? { observacion_cliente: observacionCliente } : {}) }).eq("id", id)); },
-    async documentos(conversacionId) { return ok(await db.from("documentos").select("*").eq("conversacion_id", conversacionId).is("borrado_en", null).order("creado")).map(doc); },
+    async revisarDocumento(id, { estado, nota = "", observacionCliente }) { ok(await db.from("documentos").update({ estado, nota, ...(observacionCliente !== undefined ? { observacion_cliente: observacionCliente } : {}) }).eq("notaria_id", notaria).eq("id", id)); },
+    async documentos(conversacionId) { return ok(await db.from("documentos").select("*").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).is("borrado_en", null).order("creado")).map(doc); },
     // Borrado recuperable: deja de verse; purgar() elimina el archivo después.
     async borrarDocumento(id, { por = "" } = {}) {
-      ok(await db.from("documentos").update({ borrado_en: new Date().toISOString(), borrado_por: por }).eq("id", id).is("borrado_en", null));
+      ok(await db.from("documentos").update({ borrado_en: new Date().toISOString(), borrado_por: por }).eq("notaria_id", notaria).eq("id", id).is("borrado_en", null));
     },
     async urlDocumento(id) {
-      const r = ok(await db.from("documentos").select("ruta").eq("id", id).is("borrado_en", null).maybeSingle());
+      const r = ok(await db.from("documentos").select("ruta").eq("notaria_id", notaria).eq("id", id).is("borrado_en", null).maybeSingle());
       return r ? ok(await db.storage.from(BUCKET).createSignedUrl(r.ruta, 120)).signedUrl : null;
     },
 
     async crearSolicitudCita(c) {
       for (let intento = 0; intento < 8; intento++) {
         const resultado = await db.from("solicitudes_cita").insert({ conversacion_id: c.conversacionId, tramite_id: c.tramiteId || null, fecha: c.fecha, hora: c.hora,
-          codigo: codigo(), nombre: c.nombre, nota: c.nota || "", contacto: c.contacto || null, estado: c.estado || "pendiente", ...(c.notariaId ? { notaria_id: c.notariaId } : {}) }).select("id, codigo").single();
+          codigo: codigo(), nombre: c.nombre, nota: c.nota || "", contacto: c.contacto || null, estado: c.estado || "pendiente", notaria_id: notaria }).select("id, codigo").single();
         if (resultado.error?.code === "23505") continue;
         const r = ok(resultado);
         return { id: r.id, codigo: r.codigo };
@@ -160,44 +162,44 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
       throw new Error("No se pudo generar un ticket único para ese día.");
     },
     async citasPorCodigo(codigo, desdeFecha) {
-      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("codigo", codigo).gte("fecha", desdeFecha)
+      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("notaria_id", notaria).eq("codigo", codigo).gte("fecha", desdeFecha)
         .in("estado", ["pendiente", "confirmada"]).order("fecha").order("hora"));
       return filas.map((r) => ({ ...cita(r), telefono: r.contacto || r.conversaciones?.telefono, telefonoConversacion: r.conversaciones?.telefono }));
     },
-    async solicitudesCita(conversacionId) { return ok(await db.from("solicitudes_cita").select("*").eq("conversacion_id", conversacionId).order("creada")).map(cita); },
-    async cita(id) { return cita(ok(await db.from("solicitudes_cita").select("*").eq("id", id).maybeSingle())); },
+    async solicitudesCita(conversacionId) { return ok(await db.from("solicitudes_cita").select("*").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).order("creada")).map(cita); },
+    async cita(id) { return cita(ok(await db.from("solicitudes_cita").select("*").eq("notaria_id", notaria).eq("id", id).maybeSingle())); },
     async actualizarCita(id, cambios) {
       const fila = {};
       if ("estado" in cambios) fila.estado = cambios.estado;
       if ("motivo" in cambios) fila.motivo = cambios.motivo;
       if ("asignadaA" in cambios) fila.asignada_a = cambios.asignadaA;
-      ok(await db.from("solicitudes_cita").update(fila).eq("id", id));
+      ok(await db.from("solicitudes_cita").update(fila).eq("notaria_id", notaria).eq("id", id));
     },
 
-    async marcarRecordada(id) { ok(await db.from("solicitudes_cita").update({ recordada: true }).eq("id", id)); },
+    async marcarRecordada(id) { ok(await db.from("solicitudes_cita").update({ recordada: true }).eq("notaria_id", notaria).eq("id", id)); },
     async citasEntre(desde, hasta) {
-      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").gte("fecha", desde).lte("fecha", hasta).order("fecha").order("hora").order("creada"));
+      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("notaria_id", notaria).gte("fecha", desde).lte("fecha", hasta).order("fecha").order("hora").order("creada"));
       return filas.map(r => ({ ...cita(r), telefono: r.contacto || r.conversaciones?.telefono, telefonoConversacion: r.conversaciones?.telefono }));
     },
     async agenda(fecha) {
-      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("fecha", fecha).order("hora").order("creada"));
+      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("notaria_id", notaria).eq("fecha", fecha).order("hora").order("creada"));
       return filas.map((r) => ({ ...cita(r), telefono: r.contacto || r.conversaciones?.telefono, telefonoConversacion: r.conversaciones?.telefono }));
     },
-    async listaPersonal() { return ok(await db.from("personal").select("email, nombre").order("nombre")); },
+    async listaPersonal() { return ok(await db.from("personal").select("email, nombre").eq("notaria_id", notaria).order("nombre")); },
     async citasDelDia(fecha) {
-      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("fecha", fecha).eq("estado", "confirmada").eq("recordada", false).order("hora"));
+      const filas = ok(await db.from("solicitudes_cita").select("*, conversaciones(telefono)").eq("notaria_id", notaria).eq("fecha", fecha).eq("estado", "confirmada").eq("recordada", false).order("hora"));
       return filas.map((r) => ({ ...cita(r), telefono: r.contacto || r.conversaciones?.telefono, telefonoConversacion: r.conversaciones?.telefono }));
     },
     async contarUso(clave, ventanaMs, ahora) {
-      return ok(await db.rpc("incrementar_uso", { p_clave: clave, p_ventana: Math.floor(ahora / ventanaMs) }));
+      return ok(await db.rpc("incrementar_uso", { p_notaria: notaria, p_clave: clave, p_ventana: Math.floor(ahora / ventanaMs) }));
     },
 
     async marcarMfa(email) {
-      return ok(await db.from("personal").update({ mfa_en: new Date().toISOString() }).eq("email", email).is("mfa_en", null).select("email")).length > 0;
+      return ok(await db.from("personal").update({ mfa_en: new Date().toISOString() }).eq("notaria_id", notaria).eq("email", email).is("mfa_en", null).select("email")).length > 0;
     },
-    async auditar(e) { ok(await db.from("auditoria").insert({ email: e.email || "", accion: e.accion, objetivo: e.objetivo || "", ok: e.ok !== false })); },
+    async auditar(e) { ok(await db.from("auditoria").insert({ notaria_id: notaria, email: e.email || "", accion: e.accion, objetivo: e.objetivo || "", ok: e.ok !== false })); },
     async auditoria() {
-      return ok(await db.from("auditoria").select("*").order("id", { ascending: false }).limit(500))
+      return ok(await db.from("auditoria").select("*").eq("notaria_id", notaria).order("id", { ascending: false }).limit(500))
         .map((r) => ({ creado: Date.parse(r.creado), email: r.email, accion: r.accion, objetivo: r.objetivo, ok: r.ok }));
     },
 
@@ -206,7 +208,7 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
     // Va en lotes pequeños (las listas de ids viajan en la URL). Primero se borran las filas y después los archivos: si el
     // almacenamiento falla queda un archivo huérfano (se avisa en el registro), nunca una fila con un enlace roto, y la purga
     // del día siguiente no repite el mismo error.
-    async registrarConsentimiento(c) { ok(await db.from("consentimientos").insert(c)); },
+    async registrarConsentimiento(c) { ok(await db.from("consentimientos").insert({ ...c, notaria_id: notaria })); },
     async purgar({ inactivasAntesDe, borradosAntesDe, hoy }) {
       const LOTE = 50, LOTES = 4, corte = new Date(inactivasAntesDe).toISOString();
       let conversaciones = 0, documentos = 0;
@@ -216,33 +218,33 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
         if (error) console.warn(`Purga: ${rutas.length} archivo(s) no se pudieron eliminar del almacenamiento: ${error.message}`);
       };
       for (let n = 0; n < LOTES; n++) {
-        const candidatas = ok(await db.from("conversaciones").select("id").lt("ultima_actividad_ms", inactivasAntesDe).lt("cliente_en_ms", inactivasAntesDe)
+        const candidatas = ok(await db.from("conversaciones").select("id").eq("notaria_id", notaria).lt("ultima_actividad_ms", inactivasAntesDe).lt("cliente_en_ms", inactivasAntesDe)
           .lt("creada", corte).order("ultima_actividad_ms", { ascending: true }).limit(LOTE)).map((r) => r.id);
         if (!candidatas.length) break;
-        const conCita = new Set(ok(await db.from("solicitudes_cita").select("conversacion_id").in("conversacion_id", candidatas)
+        const conCita = new Set(ok(await db.from("solicitudes_cita").select("conversacion_id").eq("notaria_id", notaria).in("conversacion_id", candidatas)
           .gte("fecha", hoy).in("estado", ["pendiente", "confirmada"])).map((r) => r.conversacion_id));
         const viejas = candidatas.filter((id) => !conCita.has(id));
         if (!viejas.length) break;
-        const rutas = ok(await db.from("documentos").select("ruta").in("conversacion_id", viejas)).map((d) => d.ruta);
+        const rutas = ok(await db.from("documentos").select("ruta").eq("notaria_id", notaria).in("conversacion_id", viejas)).map((d) => d.ruta);
         // Se repiten las condiciones: si el cliente escribió mientras tanto, esa conversación no se borra.
-        const borradas = ok(await db.from("conversaciones").delete().in("id", viejas).lt("ultima_actividad_ms", inactivasAntesDe)
+        const borradas = ok(await db.from("conversaciones").delete().eq("notaria_id", notaria).in("id", viejas).lt("ultima_actividad_ms", inactivasAntesDe)
           .lt("cliente_en_ms", inactivasAntesDe).lt("creada", corte).select("id")).length;   // en cascada: sesiones, mensajes, citas, archivos y documentos
         await quitarArchivos(rutas);
         conversaciones += borradas; documentos += rutas.length;
         if (candidatas.length < LOTE) break;
       }
       for (let n = 0; n < LOTES; n++) {
-        const lote = ok(await db.from("documentos").select("id, ruta").not("borrado_en", "is", null).lt("borrado_en", new Date(borradosAntesDe).toISOString()).limit(LOTE));
+        const lote = ok(await db.from("documentos").select("id, ruta").eq("notaria_id", notaria).not("borrado_en", "is", null).lt("borrado_en", new Date(borradosAntesDe).toISOString()).limit(LOTE));
         if (!lote.length) break;
-        ok(await db.from("documentos").delete().in("id", lote.map((d) => d.id)));
+        ok(await db.from("documentos").delete().eq("notaria_id", notaria).in("id", lote.map((d) => d.id)));
         await quitarArchivos(lote.map((d) => d.ruta));
         documentos += lote.length;
         if (lote.length < LOTE) break;
       }
-      ok(await db.from("procesados").delete().lt("creado", new Date(Date.now() - 30 * 864e5).toISOString()));
-      ok(await db.from("uso").delete().lt("creado", new Date(Date.now() - 7 * 864e5).toISOString()));   // contadores: guardan celulares y huellas de IP
+      ok(await db.from("procesados").delete().eq("notaria_id", notaria).lt("creado", new Date(Date.now() - 30 * 864e5).toISOString()));
+      ok(await db.from("uso").delete().eq("notaria_id", notaria).lt("creado", new Date(Date.now() - 7 * 864e5).toISOString()));   // contadores: guardan celulares y huellas de IP
       // Historial de consentimientos: se conserva 5 años. Si la tabla aún no existe (falta la migración), no frena la purga.
-      const { error: errConsent } = await db.from("consentimientos").delete().lt("creado", new Date(Date.now() - 5 * 365 * 864e5).toISOString());
+      const { error: errConsent } = await db.from("consentimientos").delete().eq("notaria_id", notaria).lt("creado", new Date(Date.now() - 5 * 365 * 864e5).toISOString());
       if (errConsent) console.warn("Purga: historial de consentimientos sin depurar:", errConsent.message);
       // Portal de clientes: tampoco frena la purga principal si su migración aún no se aplicó.
       try { await this.purgarPortal(); } catch (e) { console.warn("Purga: portal de clientes sin depurar:", e.message); }

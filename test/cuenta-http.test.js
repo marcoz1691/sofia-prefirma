@@ -105,6 +105,57 @@ describe("cuenta del cliente", () => {
     await almacen.guardarAjuste("funcion.portal", "1", "prueba");
     const sinProveedor = crearManejadorCuenta({ almacen, correo: null, contenido: async () => C, secreto: "" });
     expect((await sinProveedor.POST(post({ accion: "pedirCodigo", email: "ana@example.test" }))).status).toBe(503);
+    const secretoDebil = crearManejadorCuenta({ almacen, correo, contenido: async () => C, secreto: "x".repeat(31) });
+    expect((await secretoDebil.POST(post({ accion: "pedirCodigo", email: "ana@example.test" }))).status).toBe(503);
+  });
+});
+
+describe("aislamiento HTTP entre notarías", () => {
+  const limites = { codigoPorCorreo: 5, codigoPorIp: 20, codigoPorDia: 1, verificarPorIp: 10,
+    docsPorCliente: 20, vincularPorCliente: 10, vincularPorIp: 20 };
+  const pedirEn = (host, b, cookie = "") => new Request(`https://${host}/api/cuenta`, { method: "POST", headers: {
+    "content-type": "application/json", "x-sofia": "1", origin: `https://${host}`, "x-forwarded-for": "190.1.2.3", ...(cookie ? { cookie } : {})
+  }, body: JSON.stringify(b) });
+  const leerEn = (host, accion, cookie, otros = {}) => new Request(`https://${host}/api/cuenta?${new URLSearchParams({ accion, ...otros })}`, { headers: { cookie } });
+
+  it("separa códigos, clientes, cuotas, sesiones y vínculos aunque el correo y la IP coincidan", async () => {
+    const a = crearAlmacenMemoria(), mensajero = crearCorreoMemoria();
+    await a.guardarAjuste("funcion.portal", "1", "prueba");
+    const manejador = crearManejadorCuenta({ almacen: a, correo: mensajero, contenido: async () => C, ahora: () => AHORA,
+      secreto: "secreto-aislamiento-de-32-bytes-minimo", limites });
+    const hostA = "notaria41.sofiaprefirma.com", hostB = "notaria-sur.sofiaprefirma.com", email = "misma@example.test";
+
+    expect((await manejador.POST(pedirEn(hostA, { accion: "pedirCodigo", email }))).status).toBe(202);
+    expect((await manejador.POST(pedirEn(hostB, { accion: "pedirCodigo", email }))).status).toBe(202);
+    // La cuota diaria de 1 es por notaría: ambas deben haber enviado su propio código aun con la misma IP.
+    expect(mensajero.enviados).toHaveLength(2);
+    const codigoA = mensajero.enviados[0].texto.match(/\b\d{6}\b/)[0];
+    const codigoB = mensajero.enviados[1].texto.match(/\b\d{6}\b/)[0];
+    const entradaA = await manejador.POST(pedirEn(hostA, { accion: "verificar", email, codigo: codigoA }));
+    const entradaB = await manejador.POST(pedirEn(hostB, { accion: "verificar", email, codigo: codigoB }));
+    expect([entradaA.status, entradaB.status]).toEqual([200, 200]);
+    const cookieA = entradaA.headers.get("set-cookie").split(";")[0], cookieB = entradaB.headers.get("set-cookie").split(";")[0];
+    const clienteA = await a.clientePorEmail("notaria41", email), clienteB = await a.clientePorEmail("notaria-sur", email);
+    expect(clienteA.id).not.toBe(clienteB.id);
+
+    expect((await manejador.GET(leerEn(hostA, "yo", cookieA))).status).toBe(200);
+    expect((await manejador.GET(leerEn(hostB, "yo", cookieB))).status).toBe(200);
+    expect((await manejador.GET(leerEn(hostB, "yo", cookieA))).status).toBe(401);
+    expect((await manejador.GET(leerEn(hostA, "yo", cookieB))).status).toBe(401);
+
+    const convA = await a.conversacion("form:593991111111", "Ana"), convB = await a.conversacion("form:593992222222", "Berta");
+    const citaA = await a.crearSolicitudCita({ notariaId: "notaria41", conversacionId: convA.id, fecha: "2099-01-10", hora: "09:00", nombre: "Ana", tramiteId: "poder" });
+    const citaB = await a.crearSolicitudCita({ notariaId: "notaria-sur", conversacionId: convB.id, fecha: "2099-01-11", hora: "10:00", nombre: "Berta", tramiteId: "poder" });
+    const vinculoA = await emitirVinculo({ almacen: a, notariaId: "notaria41", solicitudId: citaA.id, ahora: AHORA });
+    const vinculoB = await emitirVinculo({ almacen: a, notariaId: "notaria-sur", solicitudId: citaB.id, ahora: AHORA });
+
+    expect((await manejador.POST(pedirEn(hostB, { accion: "vincular", token: vinculoA.token }, cookieB))).status).toBe(400);
+    expect((await manejador.POST(pedirEn(hostA, { accion: "vincular", token: vinculoA.token }, cookieA))).status).toBe(200);
+    expect((await manejador.POST(pedirEn(hostB, { accion: "vincular", token: vinculoB.token }, cookieB))).status).toBe(200);
+    const listaA = await (await manejador.GET(leerEn(hostA, "tramites", cookieA, { filtro: "activos" }))).json();
+    const listaB = await (await manejador.GET(leerEn(hostB, "tramites", cookieB, { filtro: "activos" }))).json();
+    expect(listaA.tramites.map((t) => t.id)).toEqual([citaA.id]);
+    expect(listaB.tramites.map((t) => t.id)).toEqual([citaB.id]);
   });
 });
 
