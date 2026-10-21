@@ -5,6 +5,7 @@ import { nuevoCodigo } from "./tickets.js";
 import { crearPortalSupabase } from "./portal-supabase.js";
 import { textoVisible } from "./mensajes.js";
 import { exigirNotaria, NOTARIA_POR_DEFECTO } from "./notaria.js";
+import { documentoVisible, resultadoAnalisisDocumento } from "./cuarentena-documentos.js";
 
 const BUCKET = "documentos";
 
@@ -16,7 +17,8 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
     consentimientoTexto: r.consentimiento_texto || "", consentimientoAviso: r.consentimiento_aviso || "", notariaId: r.notaria_id || notaria };
   const cita = (r) => r && { id: r.id, conversacionId: r.conversacion_id, codigo: r.codigo ?? null, tramiteId: r.tramite_id, fecha: r.fecha, hora: r.hora, nombre: r.nombre, nota: r.nota, estado: r.estado, motivo: r.motivo, contacto: r.contacto || null, asignadaA: r.asignada_a || "" , notariaId: r.notaria_id || notaria, clienteId: r.cliente_id ?? null };
   const doc = (r) => ({ id: r.id, conversacionId: r.conversacion_id, mediaId: r.media_id, nombre: r.nombre, mime: r.mime, descripcion: r.descripcion, tramiteId: r.tramite_id,
-    estado: r.estado, nota: r.nota, observacionCliente: r.observacion_cliente || "", solicitudId: r.solicitud_id ?? null, creado: Date.parse(r.creado) });
+    estado: r.estado, nota: r.nota, observacionCliente: r.observacion_cliente || "", solicitudId: r.solicitud_id ?? null, creado: Date.parse(r.creado),
+    seguridadEstado: r.seguridad_estado || "cuarentena", seguridadMotivo: r.seguridad_motivo || "", seguridadRevisadoEn: r.seguridad_revisado_en || null });
   const mensajesDe = async (filtro, valor) => ok(await db.from("mensajes").select("contenido").eq("notaria_id", notaria).eq(filtro, valor).order("id")).map((m) => m.contenido);
 
   return {
@@ -132,23 +134,58 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
     },
 
     async guardarDocumento(d) {
-      const ruta = `${notaria}/${d.conversacionId}/${crypto.randomUUID()}-${(d.nombre || "archivo").replace(/[^\w.\-]+/g, "_")}`;
+      // La ruta queda bajo un prefijo separado hasta que el analizador marque el objeto como limpio.
+      // El bucket sigue siendo privado; nunca se expone esta ruta al cliente.
+      const ruta = `${notaria}/${d.conversacionId}/cuarentena/${crypto.randomUUID()}-${(d.nombre || "archivo").replace(/[^\w.\-]+/g, "_")}`;
       ok(await db.storage.from(BUCKET).upload(ruta, d.bytes, { contentType: d.mime || "application/octet-stream" }));
-      const r = ok(await db.from("documentos").insert({ conversacion_id: d.conversacionId, media_id: d.mediaId, nombre: d.nombre || "", mime: d.mime || "",
-        notaria_id: notaria, ruta, descripcion: d.descripcion || "", tramite_id: d.tramiteId || null, ...(d.solicitudId ? { solicitud_id: d.solicitudId } : {}) }).select("id").single());
-      return { id: r.id };
+      try {
+        const r = ok(await db.from("documentos").insert({ conversacion_id: d.conversacionId, media_id: d.mediaId, nombre: d.nombre || "", mime: d.mime || "",
+          notaria_id: notaria, ruta, descripcion: d.descripcion || "", tramite_id: d.tramiteId || null,
+          seguridad_estado: "cuarentena", seguridad_motivo: "", seguridad_revisado_en: null,
+          ...(d.solicitudId ? { solicitud_id: d.solicitudId } : {}) }).select("id").single());
+        return { id: r.id };
+      } catch (e) {
+        // Una fila sin objeto deja un documento imposible de purgar; un objeto sin fila es recuperable por una limpieza posterior.
+        try {
+          const limpieza = await db.storage.from(BUCKET).remove([ruta]);
+          if (limpieza?.error) console.warn(`No se pudo limpiar el archivo de documento fallido: ${limpieza.error.message}`);
+        } catch (limpieza) { console.warn(`No se pudo limpiar el archivo de documento fallido: ${limpieza?.message || limpieza}`); }
+        throw e;
+      }
     },
     async documento(id) { const r = ok(await db.from("documentos").select("*").eq("notaria_id", notaria).eq("id", id).is("borrado_en", null).maybeSingle()); return r ? doc(r) : null; },
+    // Lectura exclusiva del escáner interno. No genera una URL y solo admite archivos aún en cuarentena.
+    async documentoParaAnalisis(id) {
+      const r = ok(await db.from("documentos").select("*").eq("notaria_id", notaria).eq("id", id).eq("seguridad_estado", "cuarentena").is("borrado_en", null).maybeSingle());
+      if (!r) return null;
+      const descargado = await db.storage.from(BUCKET).download(r.ruta);
+      const datos = ok(descargado);
+      const bytes = datos && typeof datos.arrayBuffer === "function" ? new Uint8Array(await datos.arrayBuffer()) : datos;
+      return { ...doc(r), ruta: r.ruta, bytes };
+    },
+    async registrarAnalisisDocumento(id, resultado, { ahora = Date.now() } = {}) {
+      const seguridad = resultadoAnalisisDocumento(resultado);
+      const filas = ok(await db.from("documentos").update({ seguridad_estado: seguridad.estado, seguridad_motivo: seguridad.motivo,
+        seguridad_revisado_en: new Date(ahora).toISOString() }).eq("notaria_id", notaria).eq("id", id)
+        .eq("seguridad_estado", "cuarentena").is("borrado_en", null).select("id"));
+      return filas.length > 0;
+    },
     // «nota» es interna (solo personal); «observacionCliente» la ve el cliente en su portal.
-    async revisarDocumento(id, { estado, nota = "", observacionCliente }) { ok(await db.from("documentos").update({ estado, nota, ...(observacionCliente !== undefined ? { observacion_cliente: observacionCliente } : {}) }).eq("notaria_id", notaria).eq("id", id)); },
+    async revisarDocumento(id, { estado, nota = "", observacionCliente }) {
+      const filas = ok(await db.from("documentos").update({ estado, nota, ...(observacionCliente !== undefined ? { observacion_cliente: observacionCliente } : {}) })
+        .eq("notaria_id", notaria).eq("id", id).eq("seguridad_estado", "limpio").is("borrado_en", null).select("id"));
+      return filas.length > 0;
+    },
     async documentos(conversacionId) { return ok(await db.from("documentos").select("*").eq("notaria_id", notaria).eq("conversacion_id", conversacionId).is("borrado_en", null).order("creado")).map(doc); },
     // Borrado recuperable: deja de verse; purgar() elimina el archivo después.
     async borrarDocumento(id, { por = "" } = {}) {
       ok(await db.from("documentos").update({ borrado_en: new Date().toISOString(), borrado_por: por }).eq("notaria_id", notaria).eq("id", id).is("borrado_en", null));
     },
     async urlDocumento(id) {
-      const r = ok(await db.from("documentos").select("ruta").eq("notaria_id", notaria).eq("id", id).is("borrado_en", null).maybeSingle());
-      return r ? ok(await db.storage.from(BUCKET).createSignedUrl(r.ruta, 120)).signedUrl : null;
+      const r = ok(await db.from("documentos").select("ruta, seguridad_estado").eq("notaria_id", notaria).eq("id", id)
+        .eq("seguridad_estado", "limpio").is("borrado_en", null).maybeSingle());
+      // `download: true` fuerza Content-Disposition: attachment: el navegador no interpreta PDF/HTML dentro del origen de Storage.
+      return r && documentoVisible({ seguridadEstado: r.seguridad_estado }) ? ok(await db.storage.from(BUCKET).createSignedUrl(r.ruta, 120, { download: true })).signedUrl : null;
     },
 
     async crearSolicitudCita(c) {

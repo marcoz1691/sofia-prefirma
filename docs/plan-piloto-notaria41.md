@@ -51,7 +51,7 @@ El nivel 1 puede iniciar antes. El nivel 2 es obligatorio antes de incorporar un
 - Cálculo de pagos en servidor, idempotencia y webhook firmado como base técnica.
 - Interruptores `portal`, `documentos` y `pagosEnLinea`; portal y pagos nacen apagados.
 - Migración de cuentas, sesiones, vínculos, eventos y pagos preparada en `supabase/esquema.sql`.
-- 578 pruebas unitarias y 213 pruebas E2E aprobadas con la barrera de despliegue.
+- 599 pruebas unitarias y 213 pruebas E2E aprobadas en el lote actual; la corrida E2E final se ejecutó con dos workers para evitar contención local.
 - `sofiaprefirma.com` y `www.sofiaprefirma.com` sirven la portada comercial desde el proyecto `sofiaprefirma`, sin autenticación de Vercel.
 - Proyecto aislado `sofiaprefirma-notaria41` creado con `projectId` `prj_upo2XAFcjMVTjEVgp9tE2l8ECukg`.
 - Deployment vigente `dpl_59bwjg9wTfutDtx1NVsiGPWHQ4Mw`, correspondiente al commit `28a7a7a`, creado sin dominio personalizado; permanece protegido por Vercel Authentication en modo `all`. El deployment anterior `dpl_47b9yRbJmdHKAzGxRb417EQ5scr6` queda como reversión inmediata.
@@ -59,6 +59,7 @@ El nivel 1 puede iniciar antes. El nivel 2 es obligatorio antes de incorporar un
 - Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA están configurados en producción y previews del piloto; sus definiciones de cron están vacías hasta el corte operativo.
 - Respaldo verificable previo a la migración guardado fuera del repositorio; incluye los esquemas `public`, `auth` y `storage` y tiene hashes SHA-256 registrados localmente.
 - Bloques de métricas, perfil notario y consentimientos verificados; bloques del portal del 2026-10-18, aislamiento multitenant del 2026-10-19 y limpieza de FK redundantes del 2026-10-19b aplicados dentro de transacciones.
+- Bloque de cuarentena documental del 2026-10-20 aplicado en una transacción después de un respaldo nuevo; columnas, restricción e índice verificados sin leer datos personales.
 - La migración del 2026-10-19 separa núcleo, panel, documentos, precios, ajustes, métricas, auditoría y límites; conserva compatibilidad temporal para el backend anterior de `notaria41`.
 - Workflow de GitHub Actions preparado con pruebas unitarias y E2E para poder exigir checks en `main` después del primer pull request.
 - `portal`, `documentos` y `pagosEnLinea` están fijados en `0`; `/api/cuenta` devuelve 503 mientras el piloto está en preparación.
@@ -72,7 +73,7 @@ El nivel 1 puede iniciar antes. El nivel 2 es obligatorio antes de incorporar un
 - `.shots.mjs` y el repositorio anidado y vacío `inmobiliaria/` siguen ajenos y sin seguimiento; no deben incluirse.
 - La fuente de contenido y la configuración de WhatsApp todavía son únicas por despliegue; antes de una segunda notaría deben configurarse como recursos propios del tenant.
 - Los defaults SQL de compatibilidad para `notaria41` deben retirarse después de actualizar y verificar el backend institucional anterior.
-- Los archivos no tienen cuarentena ni análisis antimalware.
+- Los archivos ya ingresan en cuarentena y solo se habilitan cuando su estado es `limpio`; falta integrar un motor antimalware real y sanitización/CDR de PDF, por lo que `documentos` debe permanecer apagado.
 - No existe una pasarela real ni interfaz de pago lista para producción.
 
 ## 4. Fases y puertas de avance
@@ -94,7 +95,7 @@ Prioridad: **crítica**.
 - [x] Mover `sofiaprefirma.com` y `www` únicamente al proyecto comercial.
 - [ ] Asociar `notaria41.sofiaprefirma.com` únicamente al proyecto piloto.
 - [ ] Verificar DNS, HTTPS, certificado, redirección de `www` y contenido de cada host. Comercial completado; falta el host del piloto.
-- [ ] Documentar cómo volver al deployment anterior y conservar su URL.
+- [x] Documentar cómo volver al deployment anterior y conservar su URL.
 
 **Puerta G0:** cada dominio muestra su proyecto esperado; desplegar Sofía no modifica la web institucional; existe rollback comprobado.
 
@@ -106,7 +107,9 @@ Prioridad: **crítica**.
 - [x] Registrar cada bloque SQL aplicado y su fecha; no ejecutar migraciones a ciegas.
 - [x] Aplicar, en orden, métricas y perfil notario del 2026-10-11, consentimientos del 2026-10-16 y portal del 2026-10-18.
 - [x] Respaldar y aplicar en una transacción el aislamiento multitenant del 2026-10-19 sin interrumpir el backend anterior.
-- [ ] Configurar en el proyecto piloto: Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `HUELLA_IP_SECRETO`, Resend, remitente, `SITIO_URL`, retención, MFA y secretos de cron.
+- [x] Configurar en el proyecto piloto: Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `HUELLA_IP_SECRETO`, `SITIO_URL`, retención y MFA.
+- [ ] Configurar Resend, `RESEND_API_KEY` y `CORREO_REMITENTE`, y comprobar entrega real.
+- [ ] Configurar `CRON_SECRET` solo al ejecutar el corte coordinado del único backend operativo.
 - [x] Exigir un `CUENTA_SECRETO` aleatorio de al menos 32 bytes y documentar su rotación.
 - [ ] Verificar `sofiaprefirma.com` en Resend y probar entrega, demora y carpeta de spam.
 - [x] Permitir la URL exacta del panel piloto en Supabase Auth.
@@ -127,14 +130,14 @@ Prioridad: **crítica/alta**.
 - [x] Propagar el tenant del despliegue hasta creación de conversación, cita, evento y vínculo.
 - [x] Añadir `notaria_id` al núcleo, panel, agenda, documentos, precios, ajustes, métricas, auditoría y límites.
 - [x] Comprobar tenant y autorización antes de generar una URL firmada de documento.
-- [ ] Añadir pruebas de que notas internas nunca llegan a portal, correo o WhatsApp.
+- [x] Añadir pruebas de que notas internas nunca llegan a portal, correo o WhatsApp.
 - [x] Validar la IP proporcionada por Vercel y usar HMAC secreto, independiente y tenantizado para las huellas y límites.
 - [x] Tenantizar las cuotas de OTP y vinculación.
 - [x] Exigir JSON, `X-Sofia`, `Origin` exacto y `Sec-Fetch-Site: same-origin` cuando esté presente en las solicitudes mutables del portal.
 - [x] Ejecutar `npm audit` para dependencias de producción: 0 vulnerabilidades el 19 de octubre de 2026.
-- [ ] Comprobar nuevamente cabeceras y aislamiento en el deployment nuevo.
-- [ ] Mantener pagos apagados.
-- [ ] Mantener documentos apagados hasta completar la siguiente fase.
+- [x] Comprobar nuevamente cabeceras y aislamiento en el deployment nuevo.
+- [x] Mantener pagos apagados.
+- [x] Mantener documentos apagados hasta completar la siguiente fase.
 
 **Puerta G2:** ninguna ruta de cuenta, panel, cita o documento puede cambiar de tenant mediante cuerpo, query, host falso o cabecera reenviada.
 
@@ -143,14 +146,14 @@ Prioridad: **crítica/alta**.
 Prioridad: **alta**; bloquea documentos reales.
 
 - [x] Guardar cada objeto nuevo bajo `<notaria_id>/<conversacion_id>/...`.
-- [ ] Subir primero a cuarentena.
+- [x] Subir primero a cuarentena.
 - [ ] Integrar análisis antimalware y, para PDF, sanitización/CDR cuando corresponda.
-- [ ] No mostrar ni firmar archivos hasta que el resultado sea limpio.
-- [ ] Tratar infección, error y timeout como no disponibles para el personal.
-- [ ] Servir descargas como adjunto o desde un origen aislado.
-- [ ] Eliminar el objeto si falla la creación del registro en base.
-- [ ] Registrar auditoría de apertura sin guardar URL firmada ni contenido.
-- [ ] Probar archivo limpio, infectado, tipo falso, archivo grande, timeout, huérfano y acceso cruzado.
+- [x] No mostrar, revisar ni firmar archivos hasta que el resultado sea limpio.
+- [x] Tratar infección, error y timeout como no disponibles para el personal.
+- [x] Servir descargas limpias como adjunto desde el bucket privado.
+- [x] Eliminar el objeto si falla la creación del registro en base.
+- [x] Registrar auditoría de apertura sin guardar URL firmada ni contenido.
+- [x] Probar archivo limpio, infectado, tipo falso, archivo grande, timeout, huérfano y acceso cruzado.
 
 **Puerta G3:** cero acceso antes del análisis, cero lectura cruzada y recuperación documentada ante fallo del escáner.
 
@@ -286,15 +289,15 @@ Reversión:
 
 ## 7. Orden de ejecución inmediato
 
-1. Completar Fase 0 y recuperar los dominios.
-2. Crear el proyecto aislado `sofiaprefirma-notaria41`.
-3. Completar Fase 1 con funciones apagadas.
-4. Corregir los puntos críticos de tenant de Fase 2.
-5. Ejecutar el piloto interno sin pagos y sin documentos reales.
-6. Implementar seguridad de documentos y repetir el piloto interno.
-7. Abrir el piloto real limitado.
-8. Completar Fase 6 antes de una segunda notaría.
-9. Considerar pagos reales únicamente después de estabilizar el producto.
+1. Repetir las 213 pruebas E2E sobre el lote actual, revisar el diff y cerrar el commit sin incluir `.shots.mjs` ni repositorios ajenos.
+2. Subir `claude/portal-base`, abrir el pull request y esperar los checks de GitHub Actions.
+3. Desplegar el SHA exacto en un checkout aislado y sin cron jobs; validar el preview protegido antes de promoverlo.
+4. Configurar Resend y comprobar entrega; rotar la contraseña administrativa de Supabase y añadir alertas sin datos personales.
+5. Definir y ensayar el corte único de WhatsApp y crones, todavía con `portal=0`, `documentos=0` y `pagosEnLinea=0`.
+6. Activar solo `portal` y ejecutar el piloto interno con datos ficticios.
+7. Integrar antimalware/CDR, repetir las pruebas documentales y solo entonces activar `documentos` internamente.
+8. Asociar `notaria41.sofiaprefirma.com` y abrir el piloto real limitado únicamente después de superar G1–G4.
+9. Completar Fase 6 antes de una segunda notaría y considerar pagos reales únicamente después de estabilizar el producto.
 
 ## 8. Definición de terminado
 

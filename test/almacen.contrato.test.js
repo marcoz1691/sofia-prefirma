@@ -113,7 +113,9 @@ describe.each(adaptadores)("almacén %s", (_, crear) => {
   it("guarda, lista, enlaza y borra documentos", async () => {
     const a = crear(), c = await a.conversacion(tel());
     const { id } = await a.guardarDocumento({ conversacionId: c.id, mediaId: "M1", nombre: "c.pdf", mime: "application/pdf", bytes: new Uint8Array([1, 2]), descripcion: "cédula", tramiteId: "poder" });
-    expect((await a.documentos(c.id))[0]).toMatchObject({ id, descripcion: "cédula", tramiteId: "poder", mime: "application/pdf" });
+    expect((await a.documentos(c.id))[0]).toMatchObject({ id, descripcion: "cédula", tramiteId: "poder", mime: "application/pdf", seguridadEstado: "cuarentena" });
+    expect(await a.urlDocumento(id)).toBeNull();
+    expect(await a.registrarAnalisisDocumento(id, "limpio")).toBe(true);
     expect(await a.urlDocumento(id)).toBeTruthy();
     await a.borrarDocumento(id);
     expect(await a.documentos(c.id)).toEqual([]);
@@ -155,7 +157,10 @@ describe.each(adaptadores)("almacén %s", (_, crear) => {
     const a = crear(), c = await a.conversacion(tel());
     const { id } = await a.guardarDocumento({ conversacionId: c.id, mediaId: "M1", nombre: "c.pdf", mime: "application/pdf", bytes: new Uint8Array([1]), descripcion: "cédula" });
     expect(await a.documento(id)).toMatchObject({ estado: "recibido", nota: "" });
-    await a.revisarDocumento(id, { estado: "observado", nota: "borrosa" });
+    expect(await a.revisarDocumento(id, { estado: "observado", nota: "no debe guardarse" })).toBe(false);
+    expect(await a.documento(id)).toMatchObject({ estado: "recibido", nota: "" });
+    await a.registrarAnalisisDocumento(id, "limpio");
+    expect(await a.revisarDocumento(id, { estado: "observado", nota: "borrosa" })).toBe(true);
     expect(await a.documento(id)).toMatchObject({ estado: "observado", nota: "borrosa" });
     await a.borrarDocumento(id);
   });

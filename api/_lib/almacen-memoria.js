@@ -2,6 +2,7 @@
 import { textoVisible } from "./mensajes.js";
 import { nuevoCodigo } from "./tickets.js";
 import { crearPortalMemoria } from "./portal-memoria.js";
+import { documentoVisible, resultadoAnalisisDocumento } from "./cuarentena-documentos.js";
 
 export function crearAlmacenMemoria({ personal = [], codigo = nuevoCodigo } = {}) {
   personal = structuredClone(personal);
@@ -108,14 +109,36 @@ export function crearAlmacenMemoria({ personal = [], codigo = nuevoCodigo } = {}
     async archivoRecibido(conversacionId, mediaId) {
       return copia(archivos.find((a) => a.conversacionId === conversacionId && a.id === mediaId) || null);
     },
-    async guardarDocumento(d) { const doc = { id: nuevoId(), creado: Date.now(), estado: "recibido", nota: "", observacionCliente: "", solicitudId: null, ...d }; docs.push(doc); return { id: doc.id }; },
+    async guardarDocumento(d) {
+      const doc = { id: nuevoId(), creado: Date.now(), estado: "recibido", nota: "", observacionCliente: "", solicitudId: null, ...d,
+        seguridadEstado: "cuarentena", seguridadMotivo: "", seguridadRevisadoEn: null };
+      docs.push(doc);
+      return { id: doc.id };
+    },
     async documento(id) { return copia(docs.find((d) => d.id === id && !d.borradoEn) || null); },
+    // Única lectura del contenido antes del análisis: uso interno del futuro escáner, nunca del panel ni del portal.
+    async documentoParaAnalisis(id) {
+      const d = docs.find((x) => x.id === id && !x.borradoEn && x.seguridadEstado === "cuarentena");
+      return copia(d || null);
+    },
+    async registrarAnalisisDocumento(id, resultado, { ahora = Date.now() } = {}) {
+      const d = docs.find((x) => x.id === id && !x.borradoEn && x.seguridadEstado === "cuarentena");
+      if (!d) return false;
+      const seguridad = resultadoAnalisisDocumento(resultado);
+      Object.assign(d, { seguridadEstado: seguridad.estado, seguridadMotivo: seguridad.motivo, seguridadRevisadoEn: new Date(ahora).toISOString() });
+      return true;
+    },
     // «nota» es interna (solo personal); «observacionCliente» la ve el cliente en su portal.
-    async revisarDocumento(id, { estado, nota = "", observacionCliente }) { Object.assign(docs.find((d) => d.id === id), { estado, nota, ...(observacionCliente !== undefined ? { observacionCliente } : {}) }); },
+    async revisarDocumento(id, { estado, nota = "", observacionCliente }) {
+      const d = docs.find((x) => x.id === id && !x.borradoEn && documentoVisible(x));
+      if (!d) return false;
+      Object.assign(d, { estado, nota, ...(observacionCliente !== undefined ? { observacionCliente } : {}) });
+      return true;
+    },
     async documentos(conversacionId) { return docs.filter((d) => d.conversacionId === conversacionId && !d.borradoEn).map(copia); },
     // Borrado recuperable: deja de verse; purgar() elimina el archivo después.
     async borrarDocumento(id, { por = "", ahora = Date.now() } = {}) { const d = docs.find((x) => x.id === id); if (d && !d.borradoEn) Object.assign(d, { borradoEn: ahora, borradoPor: por }); },
-    async urlDocumento(id) { return docs.some((d) => d.id === id && !d.borradoEn) ? `memoria://documentos/${id}` : null; },
+    async urlDocumento(id) { return docs.some((d) => d.id === id && !d.borradoEn && documentoVisible(d)) ? `memoria://documentos/${id}` : null; },
 
     async crearSolicitudCita(c) {
       for (let intento = 0; intento < 8; intento++) {

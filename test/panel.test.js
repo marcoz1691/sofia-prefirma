@@ -63,7 +63,7 @@ describe("panel del personal", () => {
     const { id } = await almacen.crearSolicitudCita({ conversacionId: conv.id, tramiteId: null, fecha: "2026-10-08", hora: "10:00", nombre: "Ana" });
     await panel.decidirCita(id, "rechazada", "Ese día el notario no atiende");
     expect(whatsapp.enviarTexto.mock.calls[0][1]).toMatch(/otro horario/);
-    expect(whatsapp.enviarTexto.mock.calls[0][1]).toMatch(/no atiende/);
+    expect(whatsapp.enviarTexto.mock.calls[0][1]).not.toMatch(/no atiende/);
   });
 
   it("busca tickets activos desde hoy con nombre del trámite y contacto", async () => {
@@ -91,7 +91,7 @@ describe("panel del personal", () => {
     const { id } = await almacen.crearSolicitudCita({ conversacionId: conv.id, fecha: "2026-10-08", hora: "10:00", nombre: "Ana", estado: "confirmada" });
     await panel.decidirCita(id, "rechazada", "El notario no estará ese día");
     expect(whatsapp.enviarTexto.mock.calls[0][1]).toMatch(/cancelar tu cita/);
-    expect(whatsapp.enviarTexto.mock.calls[0][1]).toMatch(/no estará/);
+    expect(whatsapp.enviarTexto.mock.calls[0][1]).not.toMatch(/no estará/);
   });
 
   it("no vuelve a decidir una cita cancelada ni repite el mismo estado (evita avisos dobles)", async () => {
@@ -179,16 +179,44 @@ describe("panel del personal", () => {
     expect(whatsapp.enviarPlantilla).toHaveBeenCalledWith("593991112233", "cita_confirmada", ["Ana", "Compraventa de inmuebles", "lunes, 12 de octubre", "09:00"]);
   });
 
-  it("revisar un documento guarda el estado y la observación y avisa al cliente", async () => {
+  it("revisar un documento guarda por separado la nota interna y la observación pública", async () => {
     const { id } = await almacen.guardarDocumento({ conversacionId: conv.id, mediaId: "M1", nombre: "c.pdf", mime: "application/pdf", bytes: new Uint8Array([1]), descripcion: "cédula" });
-    await panel.revisarDocumento(id, "observado", "La foto está borrosa, envíala de nuevo");
-    expect((await almacen.documentos(conv.id))[0]).toMatchObject({ estado: "observado", nota: "La foto está borrosa, envíala de nuevo" });
+    await almacen.registrarAnalisisDocumento(id, "limpio");
+    await panel.revisarDocumento(id, "observado", "INTERNA_NO_ENVIAR: revisar identidad", "La foto está borrosa, envíala de nuevo.");
+    expect((await almacen.documentos(conv.id))[0]).toMatchObject({ estado: "observado", nota: "INTERNA_NO_ENVIAR: revisar identidad", observacionCliente: "La foto está borrosa, envíala de nuevo." });
     expect(whatsapp.enviarTexto.mock.calls[0][1]).toMatch(/cédula.*borrosa/s);
+    expect(whatsapp.enviarTexto.mock.calls[0][1]).not.toContain("INTERNA_NO_ENVIAR");
+  });
+
+  it("sin observación pública avisa de forma genérica y nunca reutiliza la nota interna", async () => {
+    const { id } = await almacen.guardarDocumento({ conversacionId: conv.id, mediaId: "M2", nombre: "p.pdf", mime: "application/pdf", bytes: new Uint8Array([1]), descripcion: "poder" });
+    await almacen.registrarAnalisisDocumento(id, "limpio");
+    await panel.revisarDocumento(id, "observado", "INTERNA_NO_ENVIAR: posible inconsistencia");
+    const enviado = whatsapp.enviarTexto.mock.calls[0][1];
+    expect(enviado).toMatch(/poder.*por favor, revísalo/s);
+    expect(enviado).not.toContain("INTERNA_NO_ENVIAR");
+    expect(enviado).not.toContain("posible inconsistencia");
+  });
+
+  it("el motivo interno de rechazo de una cita no se envía por WhatsApp", async () => {
+    const { id } = await almacen.crearSolicitudCita({ conversacionId: conv.id, tramiteId: "compraventa", fecha: "2026-10-12", hora: "09:00", nombre: "Ana" });
+    await panel.decidirCita(id, "rechazada", "INTERNA_NO_ENVIAR: revisar alerta");
+    const enviado = whatsapp.enviarTexto.mock.calls[0][1];
+    expect(enviado).toMatch(/no pudimos confirmar tu cita/i);
+    expect(enviado).not.toContain("INTERNA_NO_ENVIAR");
+    expect(enviado).not.toContain("revisar alerta");
   });
 
   it("no acepta estados de documento desconocidos", async () => {
     const { id } = await almacen.guardarDocumento({ conversacionId: conv.id, mediaId: "M1", nombre: "", mime: "", bytes: new Uint8Array([1]), descripcion: "x" });
     await expect(panel.revisarDocumento(id, "perdido")).rejects.toThrow();
+  });
+
+  it.each(["cuarentena", "bloqueado", "error"])("no permite revisar un documento en estado de seguridad %s", async (seguridadEstado) => {
+    const { id } = await almacen.guardarDocumento({ conversacionId: conv.id, mediaId: "S-" + seguridadEstado, nombre: "x.pdf", mime: "application/pdf", bytes: new Uint8Array([1]), descripcion: "documento" });
+    if (seguridadEstado !== "cuarentena") await almacen.registrarAnalisisDocumento(id, seguridadEstado === "bloqueado" ? "infectado" : "error");
+    await expect(panel.revisarDocumento(id, "aprobado", "nota interna")).rejects.toThrow(/análisis de seguridad/);
+    expect((await almacen.documento(id)).estado).toBe("recibido");
   });
 
   describe("conversaciones del chat web", () => {

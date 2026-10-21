@@ -1,6 +1,7 @@
 // Almacén del portal de clientes sobre Supabase. Misma interfaz que portal-memoria.js.
 // Corre con la clave service_role (se salta RLS): por eso cada método exige notariaId y filtra por cliente.
 import { exigirNotaria } from "./notaria.js";
+import { documentoVisible } from "./cuarentena-documentos.js";
 
 const DIA = 864e5;
 const CAMPOS_CLIENTE = { nombres: "nombres", apellidos: "apellidos", celular: "celular", avisosCorreo: "avisos_correo", avisosWhatsapp: "avisos_whatsapp",
@@ -18,8 +19,9 @@ const pago = (r) => r && { id: r.id, notariaId: r.notaria_id, solicitudId: r.sol
 const docPublico = (d) => ({ descripcion: d.descripcion || "", nombre: d.nombre || "", estado: d.estado || "recibido", observacion: d.observacion_cliente || "",
   creado: Date.parse(d.creado) });
 const pagoPublico = (p) => ({ id: p.id, estado: p.estado, concepto: p.concepto, montoCentavos: p.monto_centavos, moneda: p.moneda, pagadoEn: p.pagado_en || null });
-const tramite = (c) => ({ id: c.id, notariaId: c.notaria_id, conversacionId: c.conversacion_id, codigo: c.codigo ?? null, tramiteId: c.tramite_id,
-  fecha: c.fecha, hora: c.hora, nombre: c.nombre, estado: c.estado, motivo: c.motivo, clienteId: c.cliente_id });
+// El portal necesita estos datos para cargar documentos y pagos, pero nunca notas operativas.
+const tramite = (c) => ({ id: c.id, conversacionId: c.conversacion_id, codigo: c.codigo ?? null, tramiteId: c.tramite_id,
+  fecha: c.fecha, hora: c.hora, nombre: c.nombre, estado: c.estado });
 
 export function crearPortalSupabase(db, ok, notariaFija = null) {
   const ahoraIso = () => new Date().toISOString();
@@ -35,12 +37,14 @@ export function crearPortalSupabase(db, ok, notariaFija = null) {
     if (filas.some((fila) => fila.notaria_id !== notariaId)) throw new Error("La consulta mezcló datos de dos notarías");
     const convs = [...new Set(filas.map((c) => c.conversacion_id))], ids = filas.map((c) => c.id);
     const [docs, pagos] = await Promise.all([
-      db.from("documentos").select("conversacion_id, solicitud_id, descripcion, nombre, estado, observacion_cliente, creado").eq("notaria_id", notariaId).in("conversacion_id", convs).is("borrado_en", null).order("creado"),
+      db.from("documentos").select("conversacion_id, solicitud_id, descripcion, nombre, estado, observacion_cliente, creado, seguridad_estado")
+        .eq("notaria_id", notariaId).eq("seguridad_estado", "limpio").in("conversacion_id", convs).is("borrado_en", null).order("creado"),
       db.from("pagos").select("id, solicitud_id, estado, concepto, monto_centavos, moneda, pagado_en").eq("notaria_id", notariaId).in("solicitud_id", ids)
     ]);
     const d = ok(docs), p = ok(pagos);
     return filas.map((c) => ({ ...tramite(c),
-      documentos: d.filter((x) => x.solicitud_id === c.id || (!x.solicitud_id && x.conversacion_id === c.conversacion_id)).map(docPublico),
+      documentos: d.filter((x) => documentoVisible({ seguridadEstado: x.seguridad_estado })
+        && (x.solicitud_id === c.id || (!x.solicitud_id && x.conversacion_id === c.conversacion_id))).map(docPublico),
       pagos: p.filter((x) => x.solicitud_id === c.id).map(pagoPublico) }));
   }
 

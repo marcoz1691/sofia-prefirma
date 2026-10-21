@@ -7,6 +7,7 @@ import { textoVisible, PREFIJO_PERSONAL } from "./mensajes.js";
 import { Aviso } from "./errores.js";
 import { registrarEvento, TEXTOS } from "./eventos.js";
 import { NOTARIA_POR_DEFECTO } from "./notaria.js";
+import { documentoVisible } from "./cuarentena-documentos.js";
 import { esHabilitante } from "../../js/nucleo.js";
 import { textoValido, textosDeAjustes } from "../../js/precios.js";
 
@@ -300,7 +301,9 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
       const dia = new Intl.DateTimeFormat("es-EC", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(new Date(cita.fecha + "T12:00:00Z"));
       const texto = estado === "confirmada"
         ? `Hola ${cita.nombre}, tu cita${tramite ? " para " + tramite : ""} quedó confirmada para el ${dia} a las ${cita.hora} en la ${C.notaria.nombre} (${C.notaria.direccion}). Recuerda traer tus documentos originales.`
-        : `Hola ${cita.nombre}, ${cita.estado === "confirmada" ? "tuvimos que cancelar tu cita" : "no pudimos confirmar tu cita"} del ${dia} a las ${cita.hora}${motivo ? ": " + motivo : ""}. Escríbenos otro horario que te convenga y te ayudamos.`;
+        // `motivo` es una nota operativa interna. Si algún día se necesita explicar una razón al cliente,
+        // debe existir un campo público separado, igual que observacionCliente en documentos.
+        : `Hola ${cita.nombre}, ${cita.estado === "confirmada" ? "tuvimos que cancelar tu cita" : "no pudimos confirmar tu cita"} del ${dia} a las ${cita.hora}. Escríbenos otro horario que te convenga y te ayudamos.`;
       if (await dentroDeVentana(c.id)) { await enviarComoPersonal(c, texto); return { avisado: true }; }
       // Fuera de la ventana de 24 h (o en citas del chat web) WhatsApp solo permite plantillas aprobadas.
       const plantilla = estado === "confirmada" ? plantillas.citaConfirmada : plantillas.citaRechazada;
@@ -323,7 +326,10 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
       if (!ESTADOS_DOC.includes(estado)) throw new Aviso(`Estado de documento inválido: ${estado}`);
       const d = await almacen.documento(id);
       if (!d) throw new Aviso("Documento no encontrado");
-      await almacen.revisarDocumento(id, { estado, nota, ...(conObservacion ? { observacionCliente: observacion } : {}) });
+      if (!documentoVisible(d)) throw new Aviso("El documento todavía no está disponible: espera que termine el análisis de seguridad.");
+      if (!await almacen.revisarDocumento(id, { estado, nota, ...(conObservacion ? { observacionCliente: observacion } : {}) })) {
+        throw new Aviso("El documento ya no está disponible para revisión.");
+      }
       // Documentos antiguos sin trámite (solicitudId nulo) no tienen línea de tiempo. La nota interna nunca va al evento.
       if (estado !== "recibido" && d.solicitudId) {
         let notariaId = NOTARIA_POR_DEFECTO;
@@ -334,8 +340,8 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
       if (estado === "recibido") return { avisado: false };
       const c = await conversacion(d.conversacionId);
       if (!(await dentroDeVentana(c.id))) return { avisado: false };
-      // Con la observación separada, al cliente solo le llega esa; sin ella (panel anterior), la nota como hasta ahora.
-      const paraCliente = conObservacion ? observacion : nota;
+      // Nunca se reutiliza la nota interna como texto público. Sin observación explícita se envía un aviso genérico.
+      const paraCliente = conObservacion ? observacion : "";
       await enviarComoPersonal(c, estado === "aprobado"
         ? `Revisamos tu documento «${d.descripcion}»: está correcto.`
         : `Revisamos tu documento «${d.descripcion}» y tiene una observación: ${paraCliente || "por favor, revísalo"}. Envíalo de nuevo o escríbenos si tienes dudas.`);

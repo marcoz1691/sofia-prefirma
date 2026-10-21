@@ -13,9 +13,9 @@ const unico = () => Date.now() + "-" + Math.random().toString(36).slice(2);
 const futuro = (ms = HORA) => new Date(Date.now() + ms).toISOString();
 const pasado = () => new Date(Date.now() - HORA).toISOString();
 
-async function tramite(a, { notariaId } = {}) {
+async function tramite(a, { notariaId, nota } = {}) {
   const conv = await a.conversacion("form:5939" + String(Math.floor(Math.random() * 1e8)).padStart(8, "0"), "Ana");
-  const { id, codigo } = await a.crearSolicitudCita({ conversacionId: conv.id, fecha: "2099-03-0" + (1 + Math.floor(Math.random() * 8)), hora: "09:00", nombre: "Ana", ...(notariaId ? { notariaId } : {}) });
+  const { id, codigo } = await a.crearSolicitudCita({ conversacionId: conv.id, fecha: "2099-03-0" + (1 + Math.floor(Math.random() * 8)), hora: "09:00", nombre: "Ana", ...(notariaId ? { notariaId } : {}), ...(nota !== undefined ? { nota } : {}) });
   return { conv, id, codigo };
 }
 
@@ -76,7 +76,8 @@ describe.each(adaptadores)("portal %s", (_, crear) => {
     const a = crear();
     const ana = await a.crearCliente({ notariaId: N, email: `ana-${unico()}@example.test`, emailVerificadoEn: new Date().toISOString() });
     const beto = await a.crearCliente({ notariaId: N, email: `beto-${unico()}@example.test`, emailVerificadoEn: new Date().toISOString() });
-    const t = await tramite(a);
+    const t = await tramite(a, { nota: "INTERNA_NO_ENVIAR: nota de agenda" });
+    await a.actualizarCita(t.id, { motivo: "INTERNA_NO_ENVIAR: revisar alerta" });
     const tk = (s) => s + "-" + unico();
     const [t1, t2, t3, t4] = [tk("t1"), tk("t2"), tk("t3"), tk("t4")];
     for (const h of [t1, t2]) await a.crearVinculacion({ notariaId: N, solicitudId: t.id, tokenHash: h, canal: "creacion", expiraEn: futuro() });
@@ -90,6 +91,9 @@ describe.each(adaptadores)("portal %s", (_, crear) => {
 
     await a.guardarDocumento({ conversacionId: t.conv.id, mediaId: "m-" + unico(), nombre: "cedula.pdf", mime: "application/pdf", bytes: new Uint8Array([37, 80, 68, 70]), descripcion: "Cédula", solicitudId: t.id });
     const [doc] = await a.documentos(t.conv.id);
+    // El portal no revela ni siquiera los metadatos del archivo mientras siga en cuarentena.
+    expect((await a.tramiteDeCliente(N, ana.id, t.id)).documentos).toEqual([]);
+    expect(await a.registrarAnalisisDocumento(doc.id, "limpio")).toBe(true);
     await a.revisarDocumento(doc.id, { estado: "observado", nota: "INTERNA: no mostrar", observacionCliente: "La foto está borrosa" });
     await a.registrarEventoTramite({ notariaId: N, solicitudId: t.id, tipo: "documento_observado", textoCliente: "Revisa tu cédula", actor: "personal" });
     await a.registrarEventoTramite({ notariaId: N, solicitudId: t.id, tipo: "confirmada", visibleCliente: false, actor: "personal" });
@@ -102,6 +106,10 @@ describe.each(adaptadores)("portal %s", (_, crear) => {
     const detalle = await a.tramiteDeCliente(N, ana.id, t.id);
     expect(detalle.documentos).toEqual([expect.objectContaining({ descripcion: "Cédula", estado: "observado", observacion: "La foto está borrosa" })]);
     expect(JSON.stringify(detalle)).not.toContain("INTERNA");
+    expect(JSON.stringify(detalle)).not.toContain("revisar alerta");
+    expect(detalle).not.toHaveProperty("nota");
+    expect(detalle).not.toHaveProperty("motivo");
+    expect(detalle).not.toHaveProperty("clienteId");
     expect(detalle.documentos[0]).not.toHaveProperty("id");
     expect(detalle.eventos.map((e) => e.tipo)).toEqual(["documento_observado"]);
 

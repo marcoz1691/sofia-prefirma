@@ -333,7 +333,9 @@ export function crearAsistente({ claude, almacen, whatsapp, contenido, avisar, a
       case "estado_de_mi_tramite": {
         const nombreDe = (id) => (tramite(id) || {}).nombre || "trámite por definir";
         const citas = (await almacen.solicitudesCita(conv.id)).filter((c) => !i.codigo || c.codigo === i.codigo).map((c) => `Solicitud de cita:${c.codigo ? " Ticket " + c.codigo + " —" : ""} ${nombreDe(c.tramiteId)} — ${c.fecha} ${c.hora} — ${c.estado}`);
-        const docs = (await almacen.documentos(conv.id)).map((d) => `Documento: ${d.descripcion}${d.tramiteId ? " (" + nombreDe(d.tramiteId) + ")" : ""} — ${d.estado || "recibido"}${d.nota ? ": " + d.nota : ""}`);
+        // Esta salida alimenta la respuesta del chat web y de WhatsApp. `nota` es exclusivamente interna;
+        // el modelo solo puede conocer la observación escrita de forma explícita para el cliente.
+        const docs = (await almacen.documentos(conv.id)).map((d) => `Documento: ${d.descripcion}${d.tramiteId ? " (" + nombreDe(d.tramiteId) + ")" : ""} — ${d.estado || "recibido"}${d.observacionCliente ? ": " + d.observacionCliente : ""}`);
         return ok([...citas, ...docs].join("\n") || "No hay solicitudes de cita ni documentos registrados.");
       }
 

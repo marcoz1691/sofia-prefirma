@@ -1,6 +1,7 @@
 // Almacén del portal de clientes en memoria (pruebas y desarrollo). Misma interfaz que portal-supabase.js.
 // Se integra en almacen-memoria.js, que le pasa acceso a sus citas y documentos.
 import { exigirNotaria } from "./notaria.js";
+import { documentoVisible } from "./cuarentena-documentos.js";
 
 const CAMPOS_CLIENTE = ["nombres", "apellidos", "celular", "avisosCorreo", "avisosWhatsapp", "privacidadVersion", "terminosVersion",
   "privacidadAceptadaEn", "ultimoAcceso", "estado"];
@@ -14,9 +15,13 @@ export function crearPortalMemoria({ citas, documentos, nuevoId }) {
   const docPublico = (d) => ({ descripcion: d.descripcion || "", nombre: d.nombre || "", estado: d.estado || "recibido",
     observacion: d.observacionCliente || "", creado: d.creado });
   const pagoPublico = (p) => ({ id: p.id, estado: p.estado, concepto: p.concepto, montoCentavos: p.montoCentavos, moneda: p.moneda, pagadoEn: p.pagadoEn || null });
+  // El portal necesita estos datos para cargar documentos y pagos, pero nunca notas operativas.
+  const tramitePublico = (c) => ({ id: c.id, conversacionId: c.conversacionId, codigo: c.codigo ?? null, tramiteId: c.tramiteId,
+    fecha: c.fecha, hora: c.hora, nombre: c.nombre, estado: c.estado });
   const resumenTramite = (c) => ({
-    ...copia(c),
-    documentos: documentos().filter((d) => !d.borradoEn && (d.solicitudId === c.id || (!d.solicitudId && d.conversacionId === c.conversacionId))).map(docPublico),
+    ...tramitePublico(c),
+    documentos: documentos().filter((d) => !d.borradoEn && documentoVisible(d)
+      && (d.solicitudId === c.id || (!d.solicitudId && d.conversacionId === c.conversacionId))).map(docPublico),
     pagos: pagos.filter((p) => p.solicitudId === c.id).map(pagoPublico)
   });
   const propia = (notariaId, clienteId, id) => citas().find((c) => c.id === id && (c.notariaId || "notaria41") === notariaId && c.clienteId === clienteId);

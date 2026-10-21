@@ -425,13 +425,27 @@ describe("herramientas", () => {
     expect(avisar.mock.calls[0][0]).toMatch(/hablar con el notario/);
   });
 
-  it("estado_de_mi_tramite incluye la revisión del personal sobre cada documento", async () => {
+  it("estado_de_mi_tramite incluye solo la observación pública y nunca la nota interna", async () => {
     const conv = await almacen.conversacion("593991112233", "Ana");
     const { id } = await almacen.guardarDocumento({ conversacionId: conv.id, mediaId: "M1", nombre: "", mime: "", bytes: new Uint8Array([1]), descripcion: "cédula" });
-    await almacen.revisarDocumento(id, { estado: "observado", nota: "está borrosa" });
+    await almacen.registrarAnalisisDocumento(id, "limpio");
+    await almacen.revisarDocumento(id, { estado: "observado", nota: "INTERNA_NO_ENVIAR: posible fraude", observacionCliente: "La foto está borrosa." });
     const claude = claudeFalso([herramienta("estado_de_mi_tramite", {}), texto("Tu cédula está observada")]);
     await nuevo(claude).atender(mensaje());
-    expect(resultadoDe(claude).content).toMatch(/cédula.*observado.*borrosa/);
+    expect(resultadoDe(claude).content).toMatch(/cédula.*observado.*borrosa/i);
+    expect(resultadoDe(claude).content).not.toContain("INTERNA_NO_ENVIAR");
+  });
+
+  it("estado_de_mi_tramite no sustituye una observación pública ausente con la nota interna", async () => {
+    const conv = await almacen.conversacion("593991112233", "Ana");
+    const { id } = await almacen.guardarDocumento({ conversacionId: conv.id, mediaId: "M2", nombre: "", mime: "", bytes: new Uint8Array([1]), descripcion: "poder" });
+    await almacen.registrarAnalisisDocumento(id, "limpio");
+    await almacen.revisarDocumento(id, { estado: "observado", nota: "INTERNA_NO_ENVIAR: llamar al notario" });
+    const claude = claudeFalso([herramienta("estado_de_mi_tramite", {}), texto("Tu documento está observado")]);
+    await nuevo(claude).atender(mensaje());
+    expect(resultadoDe(claude).content).toMatch(/poder.*observado/i);
+    expect(resultadoDe(claude).content).not.toContain("INTERNA_NO_ENVIAR");
+    expect(resultadoDe(claude).content).not.toContain("llamar al notario");
   });
 
   it("estado_de_mi_tramite lista las solicitudes y documentos del cliente", async () => {

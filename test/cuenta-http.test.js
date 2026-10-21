@@ -49,6 +49,9 @@ describe("cuenta del cliente", () => {
     expect((await api.POST(post({ accion: "verificar", email: "ana@example.test", codigo: "000000" }))).status).toBe(400);
     const r = await api.POST(post({ accion: "verificar", email: "ana@example.test", codigo }));
     const cookie = r.headers.get("set-cookie").split(";")[0];
+    const cuerpo = await r.clone().json();
+    expect(cuerpo.cliente).not.toHaveProperty("id");
+    expect(cuerpo.cliente).not.toHaveProperty("notariaId");
     expect(cookie).toMatch(/^__Host-sp_sesion=/);
     expect((await api.GET(get("yo", cookie))).status).toBe(200);
     expect((await api.POST(post({ accion: "verificar", email: "ana@example.test", codigo }))).status).toBe(400);
@@ -81,12 +84,35 @@ describe("cuenta del cliente", () => {
     const pdf = Buffer.from("%PDF-1.4\nprueba").toString("base64");
     expect((await api.POST(post({ accion: "subirDocumento", id: cita.id, descripcion: "Cédula", nombre: "cedula.pdf", base64: pdf }, cookie))).status).toBe(200);
     const [doc] = await almacen.documentos(conv.id);
+    const cuarentena = await (await api.GET(get("tramite", cookie, { id: cita.id }))).json();
+    expect(cuarentena.tramite.documentos).toEqual([]);
+    await almacen.registrarAnalisisDocumento(doc.id, "limpio");
     await almacen.revisarDocumento(doc.id, { estado: "observado", nota: "NOTA INTERNA", observacionCliente: "La foto está borrosa." });
     const detalle = await (await api.GET(get("tramite", cookie, { id: cita.id }))).json();
     expect(detalle.tramite).toMatchObject({ requisitos: ["Cédula"], documentos: [{ estado: "observado", observacion: "La foto está borrosa." }] });
     expect(JSON.stringify(detalle)).not.toContain("NOTA INTERNA");
     expect(JSON.stringify(detalle)).not.toContain("conversacionId");
     expect(JSON.stringify(detalle)).not.toContain("clienteId");
+  });
+
+  it("cuenta todos los archivos del trámite para el límite aunque sigan ocultos en cuarentena", async () => {
+    const { cookie } = await entrar("limite@example.test");
+    await api.POST(post({ accion: "completarPerfil", nombres: "Ana", apellidos: "Pérez",
+      aceptaTerminos: true, aceptaPrivacidad: true }, cookie));
+    const conv = await almacen.conversacion("form:593991234568", "Ana Pérez");
+    const cita = await almacen.crearSolicitudCita({ conversacionId: conv.id, fecha: "2099-01-10", hora: "09:00", nombre: "Ana Pérez", tramiteId: "poder" });
+    const { token } = await emitirVinculo({ almacen, notariaId: "notaria41", solicitudId: cita.id, ahora: AHORA });
+    expect((await api.POST(post({ accion: "vincular", token }, cookie))).status).toBe(200);
+    for (let i = 0; i < 20; i++) await almacen.guardarDocumento({ conversacionId: conv.id, solicitudId: cita.id,
+      mediaId: "cuarentena-" + i, nombre: "doc.pdf", mime: "application/pdf", bytes: new Uint8Array([37, 80, 68, 70]), descripcion: "Documento" });
+
+    const detalle = await (await api.GET(get("tramite", cookie, { id: cita.id }))).json();
+    expect(detalle.tramite.documentos).toEqual([]);
+    const pdf = Buffer.from("%PDF-1.4\nextra").toString("base64");
+    const respuesta = await api.POST(post({ accion: "subirDocumento", id: cita.id, descripcion: "Otro", nombre: "otro.pdf", base64: pdf }, cookie));
+    expect(respuesta.status).toBe(409);
+    expect(await respuesta.json()).toEqual({ error: "Este trámite ya tiene 20 documentos." });
+    expect(await almacen.documentos(conv.id)).toHaveLength(20);
   });
 
   it("no permite ver un trámite ajeno ni usar un ticket como credencial", async () => {

@@ -47,7 +47,7 @@ const textoCorto = (v) => (typeof v === "string" && !/[\u0000-\u001f\u007f]/.tes
 const celularValido = (v) => { const c = celular(v); return c && /^5939\d{8}$/.test(c) ? c : null; };
 const perfilCompleto = (c) => !!(c.nombres && c.apellidos && c.privacidadVersion === AVISO_PRIVACIDAD && c.terminosVersion === TERMINOS);
 // Lo único que ve el navegador del cliente: nunca estado interno, fechas de aceptación ni la notaría.
-const publico = (c) => ({ id: c.id, email: c.email, nombres: c.nombres || "", apellidos: c.apellidos || "", celular: c.celular || null,
+const publico = (c) => ({ email: c.email, nombres: c.nombres || "", apellidos: c.apellidos || "", celular: c.celular || null,
   avisosCorreo: !!c.avisosCorreo, avisosWhatsapp: !!c.avisosWhatsapp, perfilCompleto: perfilCompleto(c) });
 
 // Resumen de un trámite para el cliente: estados en texto, sin la nota interna ni ids de conversación o documentos.
@@ -182,7 +182,12 @@ export function crearManejadorCuenta({ almacen, correo, contenido, ahora = () =>
     if (!VIGENTES.includes(tramite.estado) || tramite.fecha < fechaQuito(new Date(t))) return json({ error: "Este trámite ya no recibe documentos. Escríbenos por WhatsApp si necesitas ayuda." }, 409);
     const archivo = validarArchivo(b.base64);
     if (archivo.error) return json({ error: archivo.error }, archivo.status);
-    if ((tramite.documentos || []).length >= 20) return json({ error: "Este trámite ya tiene 20 documentos." }, 409);
+    // El portal oculta los archivos que aún no están limpios. El límite debe contar también cuarentena,
+    // bloqueados y errores para que ocultarlos no permita subir archivos ilimitados durante varios días.
+    const documentosGuardados = await almacen.documentos(tramite.conversacionId);
+    const totalTramite = documentosGuardados.filter((d) => d.solicitudId === tramite.id
+      || (!d.solicitudId && d.conversacionId === tramite.conversacionId)).length;
+    if (totalTramite >= 20) return json({ error: "Este trámite ya tiene 20 documentos." }, 409);
     await almacen.guardarDocumento({ conversacionId: tramite.conversacionId, mediaId: "portal-" + randomUUID(), nombre: limpiarNombre(b.nombre),
       mime: archivo.tipo, bytes: archivo.bytes, descripcion, tramiteId: tramite.tramiteId, solicitudId: tramite.id });
     try {

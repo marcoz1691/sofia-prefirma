@@ -69,6 +69,10 @@ create table if not exists documentos (
   tramite_id text,
   estado text not null default 'recibido' check (estado in ('recibido', 'aprobado', 'observado')),  -- pre-revisión del personal
   nota text not null default '',
+  -- Seguridad del objeto, independiente de la revisión notarial. Los nuevos objetos nacen aislados.
+  seguridad_estado text not null default 'cuarentena' check (seguridad_estado in ('cuarentena', 'limpio', 'bloqueado', 'error')),
+  seguridad_motivo text not null default '',
+  seguridad_revisado_en timestamptz,
   creado timestamptz not null default now()
 );
 create index if not exists documentos_conversacion on documentos(conversacion_id);
@@ -535,3 +539,21 @@ alter table mensajes drop constraint if exists mensajes_sesion_id_fkey;
 alter table pendientes drop constraint if exists pendientes_conversacion_id_fkey;
 alter table archivos drop constraint if exists archivos_conversacion_id_fkey;
 alter table documentos drop constraint if exists documentos_conversacion_id_fkey;
+
+-- 2026-10-20: cuarentena documental. Ejecuta este bloque completo en instalaciones existentes.
+-- Es una migración aditiva: las filas anteriores también quedan cerradas hasta un análisis explícito;
+-- no se publica, firma ni revisa manualmente ningún objeto por defecto.
+alter table documentos add column if not exists seguridad_estado text not null default 'cuarentena';
+alter table documentos add column if not exists seguridad_motivo text not null default '';
+alter table documentos add column if not exists seguridad_revisado_en timestamptz;
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'documentos'::regclass and conname = 'documentos_seguridad_estado_check'
+  ) then
+    alter table documentos add constraint documentos_seguridad_estado_check
+      check (seguridad_estado in ('cuarentena', 'limpio', 'bloqueado', 'error'));
+  end if;
+end $$;
+create index if not exists documentos_seguridad_estado on documentos (notaria_id, seguridad_estado) where borrado_en is null;

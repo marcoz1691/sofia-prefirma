@@ -37,3 +37,10 @@ it("la agenda permite buscar tickets de cuatro dígitos y ver el chat de los res
   // El teléfono de una cita web es "web:<sesión>", la credencial de esa conversación: nunca se muestra.
   expect(js).toContain('if (original.startsWith("web:")) return ""');
 });
+
+it("la interfaz separa notas internas y bloquea la revisión de documentos sin análisis limpio", () => {
+  const js = readFileSync(new URL("../panel/panel.js", import.meta.url), "utf8");
+  expect(js).toContain("Nota interna sobre el rechazo (no se enviará al cliente)");
+  expect(js).toContain('x.seguridadEstado === "limpio"');
+  expect(js).toContain("todavía no puedes abrir ni revisar este archivo");
+});

@@ -143,6 +143,7 @@ setInterval(async () => {
 
 let rolSesion = null;
 const perfiles = { admin: "Administrador", notario: "Notario", personal: "Personal" };
+const SEGURIDAD_DOC = { cuarentena: "Analizando seguridad", limpio: "Archivo disponible", bloqueado: "Archivo bloqueado", error: "Análisis no completado" };
 async function mostrarApp() {
   try {
     // El perfil y las conversaciones se piden a la vez: el panel aparece completo de una sola vez.
@@ -253,12 +254,13 @@ async function abrir(id, silencioso) {
         <div class="acc">${x.estado === "pendiente" ? `<button class="btn" data-cita="${esc(x.id)}" data-estado="confirmada"${x.contacto ? ` data-contacto="${esc(x.contacto)}"` : ""}>Confirmar</button>
           <button class="btn btn--warn" data-cita="${esc(x.id)}" data-estado="rechazada"${x.contacto ? ` data-contacto="${esc(x.contacto)}"` : ""}>Rechazar</button>` : ""}
           ${x.estado === "confirmada" ? `<button class="btn btn--line" data-cita="${esc(x.id)}" data-estado="atendida">Marcar atendida</button>` : ""}</div></div>`).join("") || '<p class="aviso">Sin solicitudes de cita.</p>'}</div>
-      <div><h3>Documentos</h3>${d.documentos.map((x) => `<div class="ficha"><b>${esc(x.descripcion)}</b><small>${esc(x.nombre)} ${x.tramite ? "· " + esc(x.tramite) : ""}</small>
-        <span class="tag tag--inicio">${esc(x.estado || "recibido")}</span>${x.nota ? `<small>${esc(x.nota)}</small>` : ""}
-        <div class="acc"><button class="btn btn--line" data-ver="${esc(x.id)}">Ver</button>
+      <div><h3>Documentos</h3>${d.documentos.map((x) => { const seguro = x.seguridadEstado === "limpio"; return `<div class="ficha"><b>${esc(x.descripcion)}</b><small>${esc(x.nombre)} ${x.tramite ? "· " + esc(x.tramite) : ""}</small>
+        <span class="tag tag--inicio">${esc(x.estado || "recibido")} · ${esc(SEGURIDAD_DOC[x.seguridadEstado] || SEGURIDAD_DOC.cuarentena)}</span>${x.nota ? `<small>${esc(x.nota)}</small>` : ""}
+        ${seguro ? `<div class="acc"><button class="btn btn--line" data-ver="${esc(x.id)}">Ver</button>
           <button class="btn" data-doc="${esc(x.id)}" data-estado="aprobado">Aprobar</button>
           <button class="btn btn--line" data-doc="${esc(x.id)}" data-estado="observado">Observar</button>
-          <button class="btn btn--warn" data-borrar="${esc(x.id)}">Borrar</button></div></div>`).join("") || '<p class="aviso">Sin documentos.</p>'}</div>
+          <button class="btn btn--warn" data-borrar="${esc(x.id)}">Borrar</button></div>`
+          : `<small>Por seguridad todavía no puedes abrir ni revisar este archivo.</small><div class="acc"><button class="btn btn--warn" data-borrar="${esc(x.id)}">Borrar</button></div>`}</div>`; }).join("") || '<p class="aviso">Sin documentos.</p>'}</div>
     </aside>`;
   $("#mensajes").scrollTop = 1e9;
   cargarLista();
@@ -410,7 +412,7 @@ $("#detalle").addEventListener("click", async (e) => {
     if (b.id === "devolver") await api("POST", { accion: "devolver", id: actual });
     else if (b.dataset.cita) {
       if (!confirmarContacto(b)) return;
-      const motivo = b.dataset.estado === "rechazada" ? prompt("Motivo para el cliente (opcional):") || "" : "";
+      const motivo = b.dataset.estado === "rechazada" ? prompt("Nota interna sobre el rechazo (no se enviará al cliente):") || "" : "";
       const r = await api("POST", { accion: "cita", id: b.dataset.cita, estado: b.dataset.estado, motivo });
       if (b.dataset.estado !== "atendida" && r.avisado === false) alert("La cita se actualizó, pero no se pudo avisar por WhatsApp (pasaron más de 24 horas). Llama al cliente.");
     } else if (b.dataset.doc) {
