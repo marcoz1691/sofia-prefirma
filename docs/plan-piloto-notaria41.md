@@ -54,7 +54,7 @@ El nivel 1 puede iniciar antes. El nivel 2 es obligatorio antes de incorporar un
 - 599 pruebas unitarias y 213 pruebas E2E aprobadas en el lote actual; la corrida E2E final se ejecutó con dos workers para evitar contención local.
 - `sofiaprefirma.com` y `www.sofiaprefirma.com` sirven la portada comercial desde el proyecto `sofiaprefirma`, sin autenticación de Vercel.
 - Proyecto aislado `sofiaprefirma-notaria41` creado con `projectId` `prj_upo2XAFcjMVTjEVgp9tE2l8ECukg`.
-- Deployment vigente `dpl_59bwjg9wTfutDtx1NVsiGPWHQ4Mw`, correspondiente al commit `28a7a7a`, creado sin dominio personalizado; permanece protegido por Vercel Authentication en modo `all`. El deployment anterior `dpl_47b9yRbJmdHKAzGxRb417EQ5scr6` queda como reversión inmediata.
+- Deployment vigente `dpl_4LETv6Vbms3rfitDfDCGP57xFkD1`, correspondiente al commit `bce53a2`, creado sin dominio personalizado; permanece protegido por Vercel Authentication en modo `all`. El deployment anterior `dpl_59bwjg9wTfutDtx1NVsiGPWHQ4Mw` queda como reversión inmediata.
 - Verificación posterior al despliegue aprobada: portada autenticada `200`, acceso público `302` hacia el inicio de sesión de Vercel, precios del tenant `notaria41` y `/api/cuenta` en `503` por el interruptor `portal=0`.
 - Supabase, `NOTARIA_ID=notaria41`, `CUENTA_SECRETO`, `SITIO_URL`, retención y MFA están configurados en producción y previews del piloto; sus definiciones de cron están vacías hasta el corte operativo.
 - Respaldo verificable previo a la migración guardado fuera del repositorio; incluye los esquemas `public`, `auth` y `storage` y tiene hashes SHA-256 registrados localmente.
