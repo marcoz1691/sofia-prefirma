@@ -20,6 +20,8 @@ it("reescribe con 503 y falla abierto ante errores", async () => {
  const r = await middleware(new Request("https://ejemplo.test/"));
  expect(r.status).toBe(503); expect(r.headers.get("x-middleware-rewrite")).toBe("https://ejemplo.test/mantenimiento.html");
  expect(r.headers.get("Cache-Control")).toBe("no-store");
+ globalThis.fetch = async () => new Response("<!doctype html><title>Vercel Authentication</title>", { headers: { "content-type": "text/html; charset=utf-8" } });
+ expect((await middleware(new Request("https://ejemplo.test/"))).headers.get("x-middleware-next")).toBe("1");
  globalThis.fetch = async () => { throw Error("sin red"); };
  expect((await middleware(new Request("https://ejemplo.test/"))).headers.get("x-middleware-next")).toBe("1");
  } finally { globalThis.fetch = original; }
