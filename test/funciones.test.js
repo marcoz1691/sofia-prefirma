@@ -1,6 +1,6 @@
 import { it, expect } from "vitest";
 import { leerFunciones, funcionWebActiva, leerAjustes } from "../api/_lib/funciones.js";
-import { decidir } from "../middleware.js";
+import { decidir, esVitrinaComercial, ID_PROYECTO_COMERCIAL } from "../middleware.js";
 it("conserva valores independientes y aplica la dependencia solo en la web", () => {
   const f = leerFunciones({ "funcion.sitio": "0", "funcion.agenda": "1" });
   expect(f.agenda).toBe(true); expect(funcionWebActiva(f, "agenda")).toBe(false);
@@ -25,6 +25,19 @@ it("reescribe con 503 y falla abierto ante errores", async () => {
  globalThis.fetch = async () => { throw Error("sin red"); };
  expect((await middleware(new Request("https://ejemplo.test/"))).headers.get("x-middleware-next")).toBe("1");
  } finally { globalThis.fetch = original; }
+});
+
+it("la vitrina comercial no expone las API de una notaría", async () => {
+ const { default: middleware } = await import("../middleware.js");
+ expect(esVitrinaComercial("https://sofiaprefirma.com/api/precios", {})).toBe(true);
+ expect(esVitrinaComercial("https://preview.example/api/precios", { VERCEL_PROJECT_ID: ID_PROYECTO_COMERCIAL })).toBe(true);
+ expect(esVitrinaComercial("https://notaria41.sofiaprefirma.com/api/precios", { NOTARIA_ID: "notaria41" })).toBe(false);
+ const r = await middleware(new Request("https://sofiaprefirma.com/api/precios"));
+ expect(r.status).toBe(404);
+ expect(r.headers.get("Cache-Control")).toBe("no-store");
+ expect(await r.json()).toEqual({ error: "Esta ruta no está disponible en el sitio comercial." });
+ const piloto = await middleware(new Request("https://notaria41.sofiaprefirma.com/api/precios"));
+ expect(piloto.headers.get("x-middleware-next")).toBe("1");
 });
 
 it("portal y pagos en línea se encienden solo con \"1\"; las demás se apagan solo con \"0\"", () => {

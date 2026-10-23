@@ -45,10 +45,15 @@ document.querySelectorAll(".elegir-plan").forEach(enlace => {
 });
 
 if ("IntersectionObserver" in window) {
+  const reducirMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const observador = new IntersectionObserver(entradas => {
     entradas.forEach(entrada => {
       if (!entrada.isIntersecting) return;
       entrada.target.classList.add("visible");
+      if (!reducirMovimiento) entrada.target.animate([
+        { opacity: .35, transform: "translateY(22px)" },
+        { opacity: 1, transform: "translateY(0)" },
+      ], { duration: 600, easing: "cubic-bezier(.22,.75,.2,1)" });
       observador.unobserve(entrada.target);
     });
   }, { threshold: .1 });

@@ -24,14 +24,14 @@ describe("verificación previa del proyecto Vercel", () => {
     expect(() => validarProyectoVercel("produccion", DESTINOS_VERCEL.comercial)).toThrow(/Destino desconocido/);
   });
 
-  it("bloquea cron jobs en el piloto mientras está en preparación", () => {
-    expect(() => validarConfiguracionVercel("piloto", {
+  it.each(["comercial", "piloto"])("bloquea cron jobs en %s mientras está en preparación", (destino) => {
+    expect(() => validarConfiguracionVercel(destino, {
       crons: [{ path: "/api/purgar", schedule: "0 8 * * *" }],
     })).toThrow(/no puede registrar cron jobs/);
   });
 
-  it("permite el piloto sin cron jobs y no altera la configuración comercial", () => {
+  it("permite ambos destinos sin cron jobs", () => {
     expect(validarConfiguracionVercel("piloto", { crons: [] })).toEqual({ crons: [] });
-    expect(validarConfiguracionVercel("comercial", { crons: [{ path: "/api/purgar" }] })).toEqual({ crons: [{ path: "/api/purgar" }] });
+    expect(validarConfiguracionVercel("comercial", { crons: [] })).toEqual({ crons: [] });
   });
 });

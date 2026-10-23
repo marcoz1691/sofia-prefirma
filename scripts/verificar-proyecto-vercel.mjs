@@ -39,10 +39,10 @@ export function validarConfiguracionVercel(destino, configuracion) {
     throw new Error("No se pudo leer la configuración de Vercel.");
   }
 
-  if (destino === "piloto" && Array.isArray(configuracion.crons) && configuracion.crons.length > 0) {
+  if (Array.isArray(configuracion.crons) && configuracion.crons.length > 0) {
     throw new Error(
-      "Despliegue bloqueado: el piloto de preparación no puede registrar cron jobs. "
-      + "Retíralos del vercel.json del checkout aislado hasta completar G1 y el corte operativo.",
+      `Despliegue bloqueado: ${destino} no puede registrar cron jobs durante la preparación. `
+      + "Restáuralos únicamente después de completar G1 y coordinar el corte del backend operativo.",
     );
   }
 
