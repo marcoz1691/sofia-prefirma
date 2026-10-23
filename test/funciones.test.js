@@ -40,6 +40,24 @@ it("la vitrina comercial no expone las API de una notaría", async () => {
  expect(piloto.headers.get("x-middleware-next")).toBe("1");
 });
 
+it("la vista previa comercial sirve solo la propuesta de Sofía", async () => {
+ const { default: middleware } = await import("../middleware.js");
+ const original = process.env.VERCEL_PROJECT_ID;
+ process.env.VERCEL_PROJECT_ID = ID_PROYECTO_COMERCIAL;
+ try {
+   const propuesta = await middleware(new Request("https://preview.example/propuesta"));
+   expect(propuesta.headers.get("x-middleware-rewrite")).toBe("https://preview.example/propuesta-sofia.html");
+   const portada = await middleware(new Request("https://preview.example/"));
+   expect(portada.headers.get("x-middleware-rewrite")).toBe("https://preview.example/propuesta-sofia.html");
+   expect((await middleware(new Request("https://preview.example/assets/logo/sofia-prefirma.svg"))).headers.get("x-middleware-next")).toBe("1");
+   expect((await middleware(new Request("https://preview.example/index.html"))).status).toBe(404);
+   expect((await middleware(new Request("https://preview.example/panel/"))).status).toBe(404);
+ } finally {
+   if (original === undefined) delete process.env.VERCEL_PROJECT_ID;
+   else process.env.VERCEL_PROJECT_ID = original;
+ }
+});
+
 it("portal y pagos en línea se encienden solo con \"1\"; las demás se apagan solo con \"0\"", () => {
   expect(leerFunciones({ "funcion.portal": "1", "funcion.pagosEnLinea": "x" })).toMatchObject({ portal: true, pagosEnLinea: false, agenda: true });
   expect(leerFunciones({ "funcion.portal": "0", "funcion.agenda": "x" })).toMatchObject({ portal: false, agenda: true });

@@ -1,6 +1,15 @@
 import { rewrite, next } from "@vercel/functions";
 export const ID_PROYECTO_COMERCIAL = "prj_MJWXidhzCEkrzFMOdKi61GSfSjPj";
-export const config = { matcher: ["/", "/index.html", "/cita.html", "/asistente.html", "/privacidad.html", "/404.html", "/api/:path*"] };
+const RUTAS_CON_INTERRUPTOR = new Set(["/", "/index.html", "/cita.html", "/asistente.html", "/privacidad.html", "/404.html"]);
+const RECURSOS_COMERCIALES = new Set([
+  "/propuesta-sofia.html",
+  "/css/propuesta-sofia.css",
+  "/js/propuesta-sofia.js",
+  "/assets/favicon.svg",
+  "/assets/logo/sofia-prefirma.svg",
+  "/robots.txt",
+]);
+export const config = { matcher: ["/:path*"] };
 
 export function esVitrinaComercial(url, env = process.env) {
   const host = new URL(url).hostname.toLowerCase();
@@ -11,19 +20,25 @@ export function esVitrinaComercial(url, env = process.env) {
 
 export function decidir(url, funciones) {
   const u = new URL(url);
-  return config.matcher.includes(u.pathname) && funciones?.sitio === false ? new URL("/mantenimiento.html", u).href : null;
+  return RUTAS_CON_INTERRUPTOR.has(u.pathname) && funciones?.sitio === false ? new URL("/mantenimiento.html", u).href : null;
 }
 export default async function middleware(request) {
   const ruta = new URL(request.url).pathname;
-  if (ruta.startsWith("/api/")) {
-    if (esVitrinaComercial(request.url)) {
+  if (esVitrinaComercial(request.url)) {
+    if (ruta === "/api" || ruta.startsWith("/api/")) {
       return Response.json({ error: "Esta ruta no está disponible en el sitio comercial." }, {
         status: 404,
         headers: { "Cache-Control": "no-store" },
       });
     }
-    return next();
+    if (ruta === "/" || ruta === "/propuesta") return rewrite(new URL("/propuesta-sofia.html", request.url));
+    if (RECURSOS_COMERCIALES.has(ruta) || ruta.startsWith("/assets/fonts/")) return next();
+    return new Response("Página no encontrada.", {
+      status: 404,
+      headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
+  if (ruta === "/api" || ruta.startsWith("/api/") || !RUTAS_CON_INTERRUPTOR.has(ruta)) return next();
   try {
     const r = await fetch(new URL("/api/precios", request.url), { signal: AbortSignal.timeout(1500) });
     if (!r.ok) return next();
