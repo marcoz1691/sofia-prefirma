@@ -9,6 +9,12 @@ import { documentoVisible, resultadoAnalisisDocumento } from "./cuarentena-docum
 
 const BUCKET = "documentos";
 
+const turnoDe = (r) => r ? { id: r.id, fecha: r.fecha, numero: r.numero, nombre: r.nombre, celular: r.celular, motivo: r.motivo, canal: r.canal, codigo: r.codigo,
+  estado: r.estado, ventanilla: r.ventanilla, creado: r.creado, llamadoEn: r.llamado_en, atendidoEn: r.atendido_en } : null;
+const pagoPlanDe = (r) => r ? { id: r.id, plan: r.plan, periodo: r.periodo, baseCentavos: r.base_centavos, ivaCentavos: r.iva_centavos, totalCentavos: r.total_centavos,
+  moneda: r.moneda, proveedor: r.proveedor, ordenProveedor: r.orden_proveedor, estado: r.estado, nombre: r.nombre, notaria: r.notaria, telefono: r.telefono, correo: r.correo,
+  documento: r.documento, creado: r.creado, pagadoEn: r.pagado_en } : null;
+
 export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo, notariaId = NOTARIA_POR_DEFECTO } = {}) {
   const db = cliente || createClient(url, clave, { auth: { persistSession: false } });
   const notaria = exigirNotaria(notariaId);
@@ -246,6 +252,51 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
     // almacenamiento falla queda un archivo huérfano (se avisa en el registro), nunca una fila con un enlace roto, y la purga
     // del día siguiente no repite el mismo error.
     async registrarConsentimiento(c) { ok(await db.from("consentimientos").insert({ ...c, notaria_id: notaria })); },
+    async guardarProspecto(p) {
+      ok(await db.from("prospectos").insert({ notaria_id: notaria, conversacion_id: p.conversacionId, nombre: p.nombre, notaria: p.notaria || "",
+        ciudad: p.ciudad || "", cargo: p.cargo || "", telefono: p.telefono || "", correo: p.correo || "", plan: p.plan || "",
+        motivo: p.motivo, detalle: p.detalle || "" }));
+    },
+    async crearTurno(t) {
+      for (let intento = 0; intento < 4; intento++) {
+        const ultimo = ok(await db.from("turnos").select("numero").eq("notaria_id", notaria).eq("fecha", t.fecha).order("numero", { ascending: false }).limit(1));
+        const { data, error } = await db.from("turnos").insert({ notaria_id: notaria, fecha: t.fecha, numero: (ultimo[0]?.numero || 0) + 1, nombre: t.nombre,
+          celular: t.celular || null, motivo: t.motivo || "", canal: t.canal || "web", codigo: t.codigo }).select("*").single();
+        if (!error) return turnoDe(data);
+        if (error.code !== "23505") throw new Error(error.message);
+      }
+      throw new Error("No se pudo asignar el número de turno");
+    },
+    async turnoPorCodigo(codigo) { return turnoDe(ok(await db.from("turnos").select("*").eq("notaria_id", notaria).eq("codigo", codigo).maybeSingle())); },
+    async turnoPorId(id) { return turnoDe(ok(await db.from("turnos").select("*").eq("notaria_id", notaria).eq("id", id).maybeSingle())); },
+    async turnosDelDia(fecha) { return ok(await db.from("turnos").select("*").eq("notaria_id", notaria).eq("fecha", fecha).order("numero")).map(turnoDe); },
+    async actualizarTurno(id, cambios, { siEstado } = {}) {
+      const fila = {};
+      for (const [k, c] of [["estado", "estado"], ["ventanilla", "ventanilla"], ["llamadoEn", "llamado_en"], ["atendidoEn", "atendido_en"]]) if (k in cambios) fila[c] = cambios[k];
+      let q = db.from("turnos").update(fila).eq("notaria_id", notaria).eq("id", id);
+      if (siEstado) q = q.eq("estado", siEstado);
+      return ok(await q.select("id")).length > 0;
+    },
+    async crearPagoPlan(p) {
+      const r = ok(await db.from("pagos_planes").insert({ notaria_id: notaria, plan: p.plan, periodo: p.periodo, base_centavos: p.baseCentavos, iva_centavos: p.ivaCentavos,
+        total_centavos: p.totalCentavos, proveedor: p.proveedor, nombre: p.nombre, notaria: p.notaria || "", telefono: p.telefono || "", correo: p.correo || "", documento: p.documento }).select("*").single());
+      return pagoPlanDe(r);
+    },
+    async pagoPlan(id) { return pagoPlanDe(ok(await db.from("pagos_planes").select("*").eq("notaria_id", notaria).eq("id", id).maybeSingle())); },
+    async actualizarPagoPlan(id, cambios, { siEstado } = {}) {
+      const fila = { actualizado: new Date().toISOString() };
+      if (cambios.estado) fila.estado = cambios.estado;
+      if (cambios.ordenProveedor) fila.orden_proveedor = cambios.ordenProveedor;
+      if (cambios.pagadoEn) fila.pagado_en = cambios.pagadoEn;
+      let q = db.from("pagos_planes").update(fila).eq("notaria_id", notaria).eq("id", id);
+      if (siEstado) q = q.eq("estado", siEstado);
+      return ok(await q.select("id")).length > 0;
+    },
+    async prospectos() {
+      return ok(await db.from("prospectos").select("*").eq("notaria_id", notaria).order("creado", { ascending: false }).limit(500))
+        .map((r) => ({ id: String(r.id), conversacionId: r.conversacion_id, nombre: r.nombre, notaria: r.notaria, ciudad: r.ciudad, cargo: r.cargo,
+          telefono: r.telefono, correo: r.correo, plan: r.plan, motivo: r.motivo, detalle: r.detalle, creado: r.creado }));
+    },
     async purgar({ inactivasAntesDe, borradosAntesDe, hoy }) {
       const LOTE = 50, LOTES = 4, corte = new Date(inactivasAntesDe).toISOString();
       let conversaciones = 0, documentos = 0;

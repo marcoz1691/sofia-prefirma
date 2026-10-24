@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Toma tu turno | Notaría 41 de Quito</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <script src="js/tema.js"></script>
+    <link rel="stylesheet" href="assets/fonts/archivo.css" />
+    <link rel="stylesheet" href="assets/fonts/phosphor.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/turno.css" />
+    <script type="module" src="js/turno.js"></script>
+  </head>
+  <body>
+    <header class="nav scrolled">
+      <div class="nav__in">
+        <a class="nav__brand" href="./"><img class="brand--light" src="assets/logo/logo-notaria41-verde.svg" alt="" /><img class="brand--dark" src="assets/logo/logo-notaria41-blanco.svg" alt="" /><span>Notaría 41 de Quito</span></a>
+      </div>
+    </header>
+
+    <main class="turno">
+      <section class="turno__tarjeta" id="tomar" aria-labelledby="tomar-titulo" hidden>
+        <p class="turno__etiqueta">Fila virtual</p>
+        <h1 id="tomar-titulo">Toma tu turno</h1>
+        <p class="turno__bajada">Espera sentado: aquí verás cuántas personas tienes delante y te avisaremos cuando sea tu turno.</p>
+        <form id="form-turno" novalidate>
+          <label for="t-nombre">Tu nombre<input id="t-nombre" name="nombre" autocomplete="name" maxlength="60" required /></label>
+          <label for="t-motivo">¿A qué vienes? <small>(opcional)</small><input id="t-motivo" name="motivo" maxlength="80" placeholder="Ej.: firmar un poder" /></label>
+          <label for="t-celular">Celular para avisarte por WhatsApp <small>(opcional)</small><input id="t-celular" name="celular" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="099 123 4567" /></label>
+          <p class="turno__error" id="turno-error" role="alert" hidden></p>
+          <button class="btn btn--primary turno__boton" id="turno-enviar" type="submit">Tomar mi turno</button>
+        </form>
+      </section>
+
+      <section class="turno__tarjeta turno__ticket" id="ticket" aria-live="polite" hidden>
+        <p class="turno__etiqueta">Tu turno</p>
+        <p class="turno__numero" id="ticket-numero">T-000</p>
+        <p class="turno__estado" id="ticket-estado"></p>
+        <p class="turno__llamando" id="ticket-llamando"></p>
+        <button class="btn turno__boton turno__boton--secundario" id="ticket-nuevo" type="button" hidden>Tomar otro turno</button>
+        <p class="turno__nota">Deja esta página abierta. Se actualiza sola.</p>
+      </section>
+
+      <section class="turno__tarjeta" id="apagado" hidden>
+        <h1>Turnos en línea no disponibles</h1>
+        <p id="apagado-texto">Acércate a recepción y te atenderemos por orden de llegada.</p>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="foot__in legal__pie"><p>© 2026 Notaría 41 de Quito</p><nav class="foot__links" aria-label="Textos legales"><a href="privacidad.html">Aviso de privacidad</a><a href="terminos.html">Términos y condiciones</a></nav></div>
+    </footer>
+  </body>
+</html>

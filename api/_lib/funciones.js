@@ -7,6 +7,7 @@ export const FUNCIONES = [
   { id: "recordatorios", nombre: "Recordatorios de cita", descripcion: "El WhatsApp automático del día anterior a cada cita confirmada.", efectoAlApagar: "No se envían recordatorios hasta que la vuelvas a encender." },
   // Funciones nuevas que deben estar apagadas hasta que alguien las encienda a propósito (porDefecto: false).
   { id: "portal", porDefecto: false, nombre: "Mis trámites (cuenta del cliente)", descripcion: "Cuenta opcional para que el cliente guarde sus trámites y vea sus citas, documentos y pendientes. Necesita el envío de correos configurado.", efectoAlApagar: "Desaparece «Guardar este trámite en mi cuenta» y las páginas de la cuenta muestran que no están disponibles. Los trámites siguen funcionando sin cuenta." },
+  { id: "turnero", porDefecto: false, nombre: "Turnos en la notaría", descripcion: "Fila virtual: el cliente toma un número con el QR de la entrada, ve cuántas personas tiene delante y recibe el aviso cuando lo llaman. El personal llama desde la pestaña Fila.", efectoAlApagar: "La página de turnos y la pantalla de la sala muestran que no están disponibles; la atención sigue por orden de llegada." },
   { id: "pagosEnLinea", porDefecto: false, nombre: "Pagos en línea", descripcion: "Pago de trámites con tarjeta desde la cuenta del cliente. Solo funciona con una pasarela de pagos contratada y configurada.", efectoAlApagar: "No se muestra la opción de pagar en línea: el pago se hace en la notaría." }
 ];
 // Las funciones de siempre están encendidas salvo que se apaguen ("0"); las de porDefecto:false, solo si se encienden ("1").
@@ -26,7 +27,8 @@ export function errorWeb(ajustes, id) {
     agenda: "La agenda en línea no está disponible por ahora. Escríbenos por WhatsApp o llámanos para agendar.",
     documentos: "Por ahora no recibimos documentos por la web. Tráelos a tu cita.",
     portal: "Las cuentas de cliente no están disponibles por ahora. Puedes seguir tu trámite con tu ticket por WhatsApp o en la notaría.",
-    pagosEnLinea: "El pago en línea no está disponible: paga en la notaría el día de tu trámite."
+    pagosEnLinea: "El pago en línea no está disponible: paga en la notaría el día de tu trámite.",
+    turnero: "Los turnos en línea no están disponibles por ahora. Acércate a recepción."
   }[id];
   return { error, apagada: true };
 }

@@ -10,12 +10,13 @@ import { registrarConsentimiento } from "./consentimiento.js";
 import { registrarEvento } from "./eventos.js";
 import { emitirVinculo } from "./vinculos.js";
 import { NOTARIA_POR_DEFECTO } from "./notaria.js";
+import { elegirModelo, textosDeCliente, registrarUso } from "./modelos.js";
 // Dirección pública del sitio para los enlaces legales que Sofía comparte por WhatsApp.
 const SITIO = (process.env.SITIO_URL || "https://notaria41.vercel.app").replace(/\/$/, "");
 import { calcularTarifa, money, precioTexto, minutos, AVISO_HABILITANTES, HABILITANTES } from "../../js/nucleo.js";
 
-const MODELO = process.env.CLAUDE_MODEL || "claude-opus-5-5";
 const ESFUERZO = process.env.CLAUDE_EFFORT || "medium";
+const ESFUERZO_RAPIDO = process.env.CLAUDE_EFFORT_RAPIDO || "medium";
 const RESPALDO = "server-side-fallback-2026-07-01";
 const INACTIVIDAD_MS = 24 * 60 * 60 * 1000;
 const MAX_VUELTAS = 6;
@@ -372,6 +373,9 @@ export function crearAsistente({ claude, almacen, whatsapp, contenido, avisar, a
       return [];
     }
 
+    const previos = textosDeCliente(sesion.mensajes);
+    const eleccion = elegirModelo({ textos: [...previos, usuario.content],
+      conDocumentos: lote.some((p) => p.mensaje.tipo === "archivo") || previos.some((x) => x.includes("[El cliente envió un archivo")) });
     let porGuardar = [usuario, { role: "system", content: contexto(conv, t, C, funciones) }];
     const historial = [...porGuardar];
     const respuestas = [];
@@ -383,11 +387,11 @@ export function crearAsistente({ claude, almacen, whatsapp, contenido, avisar, a
       if (primera) await consumir();
     };
     const llamar = () => claude.beta.messages.create({
-      model: MODELO,
+      model: eleccion.modelo,
       max_tokens: 16000,
       betas: [RESPALDO],
       fallbacks: "default",
-      output_config: { effort: ESFUERZO },
+      output_config: { effort: eleccion.avanzado ? ESFUERZO : ESFUERZO_RAPIDO },
       cache_control: { type: "ephemeral" },
       system: [{ type: "text", text: sesion.sistema, cache_control: { type: "ephemeral" } }],
       tools: HERRAMIENTAS.filter(h => (h.name !== "solicitar_cita" || funciones.agenda) && (h.name !== "guardar_documento" || funciones.documentos)),
@@ -407,8 +411,7 @@ export function crearAsistente({ claude, almacen, whatsapp, contenido, avisar, a
             r = await llamar();
           } else throw e;
         }
-        await registrar(almacen, "ia.llamadas", 1, t);
-        for (const [campo, clave] of Object.entries({ input_tokens: "entrada", output_tokens: "salida", cache_read_input_tokens: "cache_lectura", cache_creation_input_tokens: "cache_escritura" })) await registrar(almacen, "ia.tokens_" + clave, r.usage?.[campo] || 0, t);
+        await registrarUso(almacen, r.usage, eleccion.avanzado, t);
         const asistente = { role: "assistant", content: r.content };
         historial.push(asistente); porGuardar.push(asistente);
         for (const b of r.content) if (b.type === "text" && b.text.trim()) respuestas.push(b.text.trim());

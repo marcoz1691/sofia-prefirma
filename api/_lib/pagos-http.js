@@ -1,6 +1,7 @@
-// API de pagos del portal (Sofía PreFirma, caso A). El monto lo calcula el servidor; la vuelta del navegador nunca cambia el estado:
-// solo el webhook firmado de la pasarela lo hace. Nunca se reciben ni guardan datos de tarjeta, y del webhook se guarda solo la huella del cuerpo.
-//   POST { accion: "iniciar", id, idempotencia }  (sesión del cliente)  → { urlCheckout, pagoId }
+// API de pagos del portal (Sofía PreFirma, caso A). El monto lo calcula el servidor; la vuelta del navegador nunca cambia el estado por
+// sí misma: solo el webhook de la pasarela o una consulta directa a la pasarela (PagoMedios) lo hacen. Nunca se reciben ni guardan datos de tarjeta, y del webhook se guarda solo la huella del cuerpo.
+//   POST { accion: "iniciar", id, idempotencia, documento? }  (sesión del cliente)  → { urlCheckout, pagoId }
+//   (documento: cédula o RUC, solo si la pasarela lo pide, como PagoMedios)
 //   GET  ?accion=estado&id=<pagoId>               (sesión del cliente)  → { estado, montoCentavos, moneda }
 //   POST ?webhook=tramite                         (pasarela, firmado)   → { ok, resultado } | { ok, duplicado }
 import { createHash } from "node:crypto";
@@ -64,6 +65,9 @@ export function crearManejadorPagos({ almacen, contenido, proveedor, ahora = () 
     if (!s) return json({ error: "Inicia sesión para continuar." }, 401);
     const notariaId = s.sesion.notariaId, clienteId = s.cliente.id;
     const id = String(b.id || ""), idempotencia = String(b.idempotencia || "");
+    const documento = String(b.documento || "").replace(/\D/g, "");
+    if (proveedor.pideDocumento && !/^\d{10}(\d{3})?$/.test(documento))
+      return json({ error: "Escribe tu cédula (10 dígitos) o RUC (13 dígitos) para el comprobante del pago.", campo: "documento" }, 400);
     if (!/^[A-Za-z0-9-]{1,64}$/.test(id)) return json({ error: "No encontramos ese trámite." }, 404);
     if (!/^[A-Za-z0-9_-]{16,64}$/.test(idempotencia)) return json({ error: "Solicitud inválida" }, 400);
 
@@ -98,7 +102,10 @@ export function crearManejadorPagos({ almacen, contenido, proveedor, ahora = () 
     try {
       let orden = pago.ordenProveedor;
       if (!orden) {
-        ({ orden } = await proveedor.crearOrden({ pago, urlRetorno }));
+        const c = s.cliente;
+        const pagador = { documento, nombre: [c.nombres, c.apellidos].filter(Boolean).join(" ") || c.email, correo: c.email, celular: c.celular || "" };
+        const urlAviso = proveedor.enlaceAviso?.(new URL("/api/pagos?webhook=tramite", request.url).href, pago.id);
+        ({ orden } = await proveedor.crearOrden({ pago, urlRetorno, pagador, urlAviso }));
         await almacen.fijarOrdenPago(pago.id, orden);
       }
       if (pago.estado === "creado" && await almacen.transicionarPago(pago.id, "creado", "pendiente")) {
@@ -124,6 +131,18 @@ export function crearManejadorPagos({ almacen, contenido, proveedor, ahora = () 
     const pago = await almacen.pagoPorId(s.sesion.notariaId, id);
     if (!pago?.solicitudId || pago.clienteId !== s.cliente.id) return noEsTuyo;
     if (!await almacen.tramiteDeCliente(s.sesion.notariaId, s.cliente.id, pago.solicitudId)) return noEsTuyo;
+    if (proveedor?.pideDocumento && ["pendiente", "procesando"].includes(pago.estado) && pago.ordenProveedor) {
+      try {
+        const c = await proveedor.consultarPago({ orden: pago.ordenProveedor });
+        if (c.estado && c.estado !== pago.estado && puedePasar(pago.estado, c.estado) && (c.estado !== "pagado" || (c.monto === pago.montoCentavos && c.moneda === pago.moneda))
+          && await almacen.transicionarPago(pago.id, pago.estado, c.estado, c.estado === "pagado" ? { pagadoEn: new Date(ahora()).toISOString() } : {})) {
+          await almacen.registrarEventoPago({ pagoId: pago.id, proveedor: proveedor.nombre, eventoProveedorId: `consulta:${pago.id}:${c.estado}`, tipo: "consulta_al_volver",
+            estadoAnterior: pago.estado, estadoNuevo: c.estado, montoCentavos: c.monto, moneda: c.moneda, firmaValida: true, resultado: "aplicado" });
+          await eventoTramite(almacen, pago, c.estado);
+          return json({ estado: c.estado, montoCentavos: pago.montoCentavos, moneda: pago.moneda });
+        }
+      } catch (e) { console.error("Pagos: no se pudo consultar el estado en la pasarela:", e.message); }
+    }
     return json({ estado: pago.estado, montoCentavos: pago.montoCentavos, moneda: pago.moneda });
   }
 
@@ -150,6 +169,12 @@ export function crearManejadorPagos({ almacen, contenido, proveedor, ahora = () 
       return json({ error: "Firma inválida" }, 401);
     }
 
+    if (ev.consultar) {
+      const ref = await almacen.pagoPorId(notariaDe(request), ev.pagoId);
+      if (!ref?.ordenProveedor || ref.proveedor !== nombre) return json({ error: "Pago desconocido" }, 404);
+      const c = await proveedor.consultarPago({ orden: ref.ordenProveedor });
+      ev = { ...ev, orden: ref.ordenProveedor, estado: c.estado, monto: c.monto, moneda: c.moneda, eventoId: `consulta:${ref.id}:${c.estado}` };
+    }
     const pago = await almacen.pagoPorOrden(nombre, ev.orden);
     const nuevo = ev.estado;
     const registro = { pagoId: pago?.id || null, proveedor: nombre, eventoProveedorId: ev.eventoId, tipo: ev.tipo || "", estadoAnterior: pago?.estado ?? null,

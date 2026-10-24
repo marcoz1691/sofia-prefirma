@@ -1,12 +1,19 @@
 import { rewrite, next } from "@vercel/functions";
 export const ID_PROYECTO_COMERCIAL = "prj_MJWXidhzCEkrzFMOdKi61GSfSjPj";
-const RUTAS_CON_INTERRUPTOR = new Set(["/", "/index.html", "/cita.html", "/asistente.html", "/privacidad.html", "/404.html"]);
+const RUTAS_CON_INTERRUPTOR = new Set(["/", "/index.html", "/cita.html", "/asistente.html", "/privacidad.html", "/404.html", "/turno.html", "/sala.html"]);
 const RECURSOS_COMERCIALES = new Set([
   "/propuesta-sofia.html",
   "/css/propuesta-sofia.css",
   "/js/propuesta-sofia.js",
-  "/assets/favicon.svg",
-  "/assets/logo/sofia-prefirma.svg",
+  "/assets/logo/sofia-prefirma-oficial.svg",
+  "/assets/logo/sofia-prefirma-oficial-blanco.svg",
+  "/assets/logo/sofia-prefirma-oficial-simbolo.svg",
+  "/js/ventas-chat.js",
+  "/js/chat-nucleo.js",
+  "/js/aceptacion.js",
+  "/js/legal.js",
+  "/prefirma-privacidad.html",
+  "/prefirma-terminos.html",
   "/robots.txt",
 ]);
 export const config = { matcher: ["/:path*"] };
@@ -25,6 +32,8 @@ export function decidir(url, funciones) {
 export default async function middleware(request) {
   const ruta = new URL(request.url).pathname;
   if (esVitrinaComercial(request.url)) {
+    // La única API del sitio comercial es el chat de ventas, que trabaja en su propio tenant (api/ventas.js).
+    if (ruta === "/api/ventas") return next();
     if (ruta === "/api" || ruta.startsWith("/api/")) {
       return Response.json({ error: "Esta ruta no está disponible en el sitio comercial." }, {
         status: 404,

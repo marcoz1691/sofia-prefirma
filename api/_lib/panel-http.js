@@ -95,6 +95,7 @@ export function crearManejadorPanel({ panel, auth, exigirMfa = true, limiteDesca
     conversaciones: { fn: () => panel.conversaciones() },
     buscarTicket: { fn: (q) => panel.buscarTicket(q.get("codigo")), auditar: true },
     agenda: { fn: (q) => panel.agenda(q.get("fecha")) },
+    fila: { fn: () => panel.fila() },
     detalle: { fn: (q) => panel.detalle(q.get("id")), auditar: true },
     documento: { auditar: true, estricta: true, fn: async (q, email) => {
       if ((await auth.contarUso("panel:descargas:" + email, HORA, ahora())) > limiteDescargas) {
@@ -129,6 +130,8 @@ export function crearManejadorPanel({ panel, auth, exigirMfa = true, limiteDesca
     devolver: (b) => panel.devolverAlAsistente(b.id),
     cita: (b) => panel.decidirCita(b.id, b.estado, b.motivo),
     asignarCita: (b) => panel.asignarCita(b.id, b.persona),
+    llamarTurno: (b) => panel.llamarSiguiente(b.ventanilla),
+    marcarTurno: (b) => panel.marcarTurno(b.id, b.estado),
     revisarDocumento: (b) => panel.revisarDocumento(b.id, b.estado, b.nota, b.observacionCliente),
     borrarDocumento: (b, email) => panel.borrarDocumento(b.id, email)
   };

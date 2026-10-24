@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Turnos | Notaría 41 de Quito</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/fonts/archivo.css" />
+    <link rel="stylesheet" href="css/turno.css" />
+    <script type="module" src="js/sala.js"></script>
+  </head>
+  <body class="sala">
+    <header class="sala__cab"><img src="assets/logo/logo-notaria41-blanco.svg" alt="" /><b>Notaría 41 de Quito</b><span class="sala__hora" id="sala-hora"></span></header>
+    <main class="sala__main" aria-live="polite">
+      <section class="sala__actual">
+        <p class="sala__etiqueta">Turno</p>
+        <p class="sala__numero" id="sala-numero">—</p>
+        <p class="sala__ventanilla" id="sala-ventanilla">Toma tu turno con el código QR de la entrada</p>
+      </section>
+      <section class="sala__anteriores">
+        <h2>Últimos llamados</h2>
+        <ol id="sala-lista"></ol>
+        <p class="sala__espera" id="sala-espera"></p>
+      </section>
+    </main>
+  </body>
+</html>

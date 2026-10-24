@@ -5,7 +5,7 @@ it("conserva valores independientes y aplica la dependencia solo en la web", () 
   const f = leerFunciones({ "funcion.sitio": "0", "funcion.agenda": "1" });
   expect(f.agenda).toBe(true); expect(funcionWebActiva(f, "agenda")).toBe(false);
   const porDefecto = leerFunciones();
-  expect(Object.entries(porDefecto).filter(([, v]) => !v).map(([k]) => k)).toEqual(["portal", "pagosEnLinea"]);
+  expect(Object.entries(porDefecto).filter(([, v]) => !v).map(([k]) => k)).toEqual(["portal", "turnero", "pagosEnLinea"]);
   expect(decidir("https://ejemplo.test/cita.html", f)).toBe("https://ejemplo.test/mantenimiento.html");
   expect(decidir("https://ejemplo.test/panel/", f)).toBeNull();
 });
@@ -49,7 +49,7 @@ it("la vista previa comercial sirve solo la propuesta de Sofía", async () => {
    expect(propuesta.headers.get("x-middleware-rewrite")).toBe("https://preview.example/propuesta-sofia.html");
    const portada = await middleware(new Request("https://preview.example/"));
    expect(portada.headers.get("x-middleware-rewrite")).toBe("https://preview.example/propuesta-sofia.html");
-   expect((await middleware(new Request("https://preview.example/assets/logo/sofia-prefirma.svg"))).headers.get("x-middleware-next")).toBe("1");
+   expect((await middleware(new Request("https://preview.example/assets/logo/sofia-prefirma-oficial.svg"))).headers.get("x-middleware-next")).toBe("1");
    expect((await middleware(new Request("https://preview.example/index.html"))).status).toBe(404);
    expect((await middleware(new Request("https://preview.example/panel/"))).status).toBe(404);
  } finally {

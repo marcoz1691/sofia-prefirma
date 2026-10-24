@@ -60,11 +60,26 @@ describe("atender", () => {
     const claude = claudeFalso([texto("ok")]);
     await nuevo(claude).atender(mensaje());
     const p = claude.llamadas[0];
-    expect(p.model).toBe("claude-opus-5-5");
+    expect(p.model).toBe("claude-sonnet-5-5");
     expect(p.fallbacks).toBe("default");
     expect(p.betas).toContain("server-side-fallback-2026-07-01");
     expect(p.system[0].cache_control).toEqual({ type: "ephemeral" });
     expect(p.system[0].text).toContain("Compraventa de inmuebles");
+  });
+
+  it("escala al modelo avanzado con un caso complejo y se queda en él durante la sesión", async () => {
+    const claude = claudeFalso([texto("ok"), texto("ok"), texto("ok")]);
+    const asistente = nuevo(claude);
+    await asistente.atender(mensaje({ texto: "¿Qué horario tienen?" }));
+    await asistente.atender(mensaje({ texto: "Necesito hacer la posesión efectiva de la herencia de mi papá" }));
+    await asistente.atender(mensaje({ texto: "¿Y el sábado abren?" }));
+    expect(claude.llamadas.map((p) => p.model)).toEqual(["claude-sonnet-5-5", "claude-opus-5-5", "claude-opus-5-5"]);
+  });
+
+  it("usa el modelo avanzado cuando el cliente envía un documento", async () => {
+    const claude = claudeFalso([texto("Recibido")]);
+    await nuevo(claude).atender(mensaje({ tipo: "archivo", texto: "", media: { id: "m1", mime: "application/pdf", nombre: "cedula.pdf" } }));
+    expect(claude.llamadas[0].model).toBe("claude-opus-5-5");
   });
 
   it("pone la fecha y el estado como mensaje de sistema después del mensaje del cliente", async () => {
@@ -737,7 +752,7 @@ it("filtra herramientas en orden estable, agrega contexto y registra usage", asy
   expect(claude.llamadas[0].messages.at(-1).content).toContain("La agenda está desactivada");
   expect(claude.llamadas[0].messages.at(-1).content).toContain("Por ahora no recibimos documentos");
   const filas = await almacen.metricas("2026-10-06", "2026-10-06");
-  for (const [clave, valor] of Object.entries({ llamadas: 1, tokens_entrada: 10, tokens_salida: 20, tokens_cache_lectura: 30, tokens_cache_escritura: 40 })) expect(filas).toContainEqual({ fecha: "2026-10-06", clave: "ia." + clave, valor });
+  for (const [clave, valor] of Object.entries({ llamadas: 1, tokens_entrada: 10, tokens_salida: 20, tokens_cache_lectura: 30, tokens_cache_escritura: 40 })) expect(filas).toContainEqual({ fecha: "2026-10-06", clave: "ia.rapido." + clave, valor });
 });
 it.each(["593991112233", "web:sesion"])("cuenta derivación del canal %s", async de => {
  const claude = claudeFalso([herramienta("derivar_a_persona", { motivo: "ayuda" }), texto("Listo")]);

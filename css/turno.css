@@ -1,0 +1,45 @@
+/* Turnero: página del cliente (turno.html) y pantalla de la sala (sala.html). */
+.turno{min-height:calc(100vh - 160px);display:grid;place-items:start center;padding:110px 20px 60px;background:var(--bg-alt)}
+.turno__tarjeta{width:min(520px,100%);background:var(--card);border-radius:24px;padding:32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.08)}
+.turno__etiqueta{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.turno h1{margin:0 0 10px;font-size:clamp(30px,7vw,40px);letter-spacing:-.03em;line-height:1.05}
+.turno__bajada{margin:0 0 22px;color:var(--fg);opacity:.75;line-height:1.5}
+.turno form{display:grid;gap:14px}
+.turno label{display:grid;gap:6px;font-size:14px;font-weight:600}
+.turno label small{font-weight:400;opacity:.7}
+.turno input{border:1px solid rgba(127,127,127,.35);border-radius:12px;padding:13px 14px;font:16px var(--font);color:var(--fg);background:var(--card)}
+.turno input:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+.turno .aceptacion{margin:0;border:0;padding:0;display:grid;gap:8px;font-size:13px}
+.turno .aceptacion legend{font-weight:700;margin-bottom:4px}
+.turno .aceptacion label{display:flex;gap:8px;align-items:flex-start;font-weight:400}
+.turno .aceptacion a{color:var(--accent)}
+.turno .aceptacion__error,.turno__error{margin:0;padding:10px 12px;border-radius:10px;background:rgba(200,40,60,.08);color:#A42839;font-size:14px}
+.turno__boton{justify-content:center;width:100%;margin:6px 0 0}
+.turno__boton--secundario{border:1px solid rgba(127,127,127,.35)}
+.turno__ticket{text-align:center}
+.turno__numero{margin:6px 0;font-size:clamp(72px,24vw,120px);font-weight:700;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
+.turno__estado{margin:6px 0;font-size:20px;font-weight:600}
+.turno__llamando{margin:4px 0 14px;opacity:.7}
+.turno__nota{margin:18px 0 0;font-size:13px;opacity:.6}
+.turno--llamado .turno__ticket{background:var(--accent);color:var(--accent-fg)}
+.turno--llamado .turno__etiqueta{color:inherit}
+@media (prefers-reduced-motion:no-preference){.turno--llamado .turno__numero{animation:turno-pulso 1.2s ease-in-out 3}}
+@keyframes turno-pulso{50%{transform:scale(1.06)}}
+
+.sala{margin:0;min-height:100vh;background:#0A3B2E;color:#fff;font-family:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+.sala__cab{display:flex;align-items:center;gap:16px;padding:24px 4vw;font-size:clamp(18px,2vw,28px)}
+.sala__cab img{width:clamp(40px,4vw,64px);height:auto}
+.sala__hora{margin-left:auto;font-variant-numeric:tabular-nums;opacity:.8}
+.sala__main{flex:1;display:grid;grid-template-columns:1.4fr 1fr;gap:4vw;padding:2vw 4vw 4vw}
+.sala__actual{display:grid;align-content:center;justify-items:center;border-radius:32px;background:rgba(255,255,255,.08);padding:4vw}
+.sala__etiqueta{margin:0;font-size:clamp(20px,2.5vw,36px);letter-spacing:.2em;text-transform:uppercase;opacity:.7}
+.sala__numero{margin:0;font-size:clamp(90px,16vw,260px);font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.sala__ventanilla{margin:12px 0 0;font-size:clamp(24px,3.5vw,56px);color:#5FD3A2;text-align:center}
+.sala__anteriores h2{margin:0 0 2vw;font-size:clamp(20px,2.2vw,34px);font-weight:600;opacity:.8}
+.sala__anteriores ol{list-style:none;margin:0;padding:0;display:grid;gap:1.2vw}
+.sala__anteriores li{display:flex;justify-content:space-between;align-items:baseline;padding:1.2vw 1.6vw;border-radius:18px;background:rgba(255,255,255,.06);font-size:clamp(22px,2.6vw,42px)}
+.sala__anteriores li span{opacity:.7;font-size:.7em}
+.sala__espera{margin:2vw 0 0;font-size:clamp(18px,2vw,30px);opacity:.75}
+@media (prefers-reduced-motion:no-preference){.sala--nuevo .sala__actual{animation:sala-nuevo 1s ease-out 2}}
+@keyframes sala-nuevo{0%{background:#5FD3A2;color:#0A3B2E}100%{background:rgba(255,255,255,.08)}}
+@media (max-width:800px){.sala__main{grid-template-columns:1fr}}

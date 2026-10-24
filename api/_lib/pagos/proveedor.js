@@ -1,5 +1,5 @@
-// Contrato de la pasarela de pagos (Sofía PreFirma, caso A: el ciudadano paga su trámite). La pasarela real está sin decidir:
-// mientras no haya una contratada y configurada, obtenerProveedorPagos devuelve null y el pago en línea no existe.
+// Contrato de la pasarela de pagos (Sofía PreFirma: el ciudadano paga su trámite y la notaría paga su plan). La pasarela real es
+// PagoMedios (pagomedios.js); mientras no esté configurada, obtenerProveedorPagos devuelve null y el pago en línea no existe.
 //
 // Un proveedor es un objeto con:
 //   nombre: texto corto y estable (se guarda en pagos.proveedor y pago_eventos.proveedor).
@@ -7,11 +7,14 @@
 //   iniciarCheckout({ pago, orden, urlRetorno }) → { urlCheckout }  Página de pago alojada por la pasarela: la tarjeta nunca pasa por aquí.
 //   consultarPago({ orden })                     → { estado, monto, moneda }
 //   procesarWebhook(request)                     → { valido, eventoId, orden, estado, monto, moneda, tipo, cargaHuella }
+//       o, si el aviso del proveedor no trae firma propia, { valido, consultar: true, pagoId, tipo, cargaHuella }: el estado se
+//       confirma entonces con consultarPago, nunca con el contenido del aviso.
 //       Verifica la firma sobre el cuerpo crudo. `estado` es uno de ESTADOS; `monto` va en centavos (entero);
 //       `cargaHuella` es el sha256 del cuerpo (el cuerpo nunca se guarda). Si la firma no es válida: { valido: false, cargaHuella }.
 //   reembolsar?({ pago })                        → opcional.
 // Nunca se reciben, guardan ni registran datos de tarjeta.
 import { crearProveedorFalso } from "./proveedor-falso.js";
+import { crearProveedorPagoMedios } from "./pagomedios.js";
 
 export const ESTADOS = ["creado", "pendiente", "procesando", "pagado", "fallido", "cancelado", "reembolsado"];
 
@@ -36,8 +39,11 @@ export function validarProveedor(p) {
   return p;
 }
 
-// Devuelve el proveedor configurado o null. Hoy no hay pasarela real: solo el falso, y nunca en producción.
+// Devuelve el proveedor configurado o null. PagoMedios usa PAGOMEDIOS_TOKEN (de pruebas o de producción, según el que entregue
+// PagoMedios) y PAGOS_SECRETO para firmar sus enlaces de aviso. El falso solo existe fuera de producción.
 export function obtenerProveedorPagos(env = process.env) {
+  if (env.PAGOS_PROVEEDOR === "pagomedios" && env.PAGOMEDIOS_TOKEN && env.PAGOS_SECRETO)
+    return validarProveedor(crearProveedorPagoMedios({ token: env.PAGOMEDIOS_TOKEN, secreto: env.PAGOS_SECRETO, base: env.PAGOMEDIOS_API || undefined }));
   if (env.PAGOS_PROVEEDOR === "falso" && env.VERCEL_ENV !== "production" && env.PAGOS_SECRETO_PRUEBA)
     return validarProveedor(crearProveedorFalso({ secreto: env.PAGOS_SECRETO_PRUEBA, entorno: env.VERCEL_ENV }));
   return null;

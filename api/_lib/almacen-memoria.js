@@ -6,7 +6,7 @@ import { documentoVisible, resultadoAnalisisDocumento } from "./cuarentena-docum
 
 export function crearAlmacenMemoria({ personal = [], codigo = nuevoCodigo } = {}) {
   personal = structuredClone(personal);
-  const invitaciones = [], consentimientos = [];
+  const invitaciones = [], consentimientos = [], prospectos = [], pagosPlanes = [], filaTurnos = [];
   const precios = new Map(), ajustes = {}, detalles = {}, metricas = new Map();
   const procesados = new Set(), convs = new Map(), sesiones = new Map();
   let archivos = [], docs = [], citas = [], pendientes = [];
@@ -187,6 +187,31 @@ export function crearAlmacenMemoria({ personal = [], codigo = nuevoCodigo } = {}
     // y los documentos borrados desde el panel antes de `borradosAntesDe`.
     async registrarConsentimiento(c) { consentimientos.push(copia(c)); },
     async consentimientos() { return copia(consentimientos); },
+    // Interesados que registra el chat de ventas de SOFIA PreFirma.
+    async guardarProspecto(p) { prospectos.push({ id: nuevoId(), creado: new Date().toISOString(), ...copia(p) }); },
+    async prospectos() { return copia(prospectos).reverse(); },
+    // Turnero: el número es correlativo por día.
+    async crearTurno(t) {
+      const numero = Math.max(0, ...filaTurnos.filter((x) => x.fecha === t.fecha).map((x) => x.numero)) + 1;
+      const fila = { id: crypto.randomUUID(), numero, estado: "esperando", ventanilla: "", creado: new Date().toISOString(), llamadoEn: null, atendidoEn: null, ...copia(t) };
+      filaTurnos.push(fila); return copia(fila);
+    },
+    async turnoPorCodigo(codigo) { return copia(filaTurnos.find((x) => x.codigo === codigo) || null); },
+    async turnoPorId(id) { return copia(filaTurnos.find((x) => x.id === id) || null); },
+    async turnosDelDia(fecha) { return copia(filaTurnos.filter((x) => x.fecha === fecha).sort((a, b) => a.numero - b.numero)); },
+    async actualizarTurno(id, cambios, { siEstado } = {}) {
+      const t = filaTurnos.find((x) => x.id === id);
+      if (!t || (siEstado && t.estado !== siEstado)) return false;
+      Object.assign(t, copia(cambios)); return true;
+    },
+    // Pagos en línea de los planes de SOFIA PreFirma.
+    async crearPagoPlan(p) { const fila = { id: crypto.randomUUID(), estado: "creado", moneda: "USD", ordenProveedor: null, pagadoEn: null, creado: new Date().toISOString(), ...copia(p) }; pagosPlanes.push(fila); return copia(fila); },
+    async pagoPlan(id) { return copia(pagosPlanes.find((x) => x.id === id) || null); },
+    async actualizarPagoPlan(id, cambios, { siEstado } = {}) {
+      const p = pagosPlanes.find((x) => x.id === id);
+      if (!p || (siEstado && p.estado !== siEstado)) return false;
+      Object.assign(p, copia(cambios)); return true;
+    },
     async purgar({ inactivasAntesDe, borradosAntesDe, hoy }) {
       const conCita = new Set(citas.filter((x) => x.fecha >= hoy && (x.estado === "pendiente" || x.estado === "confirmada")).map((x) => x.conversacionId));
       const actividad = (c) => Math.max(c.creada || 0, c.clienteEn || 0, ...[...sesiones.values()].filter((x) => x.conversacionId === c.id).map((x) => x.ultima));

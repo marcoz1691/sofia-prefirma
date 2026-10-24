@@ -557,3 +557,84 @@ begin
   end if;
 end $$;
 create index if not exists documentos_seguridad_estado on documentos (notaria_id, seguridad_estado) where borrado_en is null;
+
+-- 2026-10-23: chat de ventas de SOFIA PreFirma en el sitio comercial. Ejecuta este bloque antes de desplegar /api/ventas.
+-- Las conversaciones de ventas viven en su propio tenant («sofia-ventas»: NOTARIA_ID del proyecto comercial) y nunca se
+-- mezclan con las de una notaría. Los interesados se guardan aparte para que sobrevivan a la purga de los chats; por eso
+-- conversacion_id no lleva clave foránea.
+insert into notarias (id, nombre) values ('sofia-ventas', 'SOFIA PreFirma · ventas') on conflict (id) do nothing;
+create table if not exists prospectos (
+  id bigint generated always as identity primary key,
+  notaria_id text not null references notarias(id),
+  conversacion_id uuid,
+  nombre text not null,
+  notaria text not null default '',
+  ciudad text not null default '',
+  cargo text not null default '',
+  telefono text not null default '',
+  correo text not null default '',
+  plan text not null default '',
+  motivo text not null check (motivo in ('demostracion', 'cotizacion', 'contratar', 'asesor', 'soporte')),
+  detalle text not null default '',
+  creado timestamptz not null default now()
+);
+create index if not exists prospectos_notaria_creado on prospectos (notaria_id, creado desc);
+alter table prospectos enable row level security;
+revoke all on prospectos from anon, authenticated;
+
+-- 2026-10-23b: pago en línea de los planes de SOFIA PreFirma (PagoMedios). Ejecuta este bloque antes de habilitar
+-- PAGOS_PROVEEDOR=pagomedios en el proyecto comercial. El monto lo fija el servidor según el plan; la tarjeta nunca pasa
+-- por el sitio y el estado solo cambia después de consultar a PagoMedios.
+create table if not exists pagos_planes (
+  id uuid primary key default gen_random_uuid(),
+  notaria_id text not null references notarias(id),
+  plan text not null,
+  periodo text not null check (periodo in ('mensual', 'anual')),
+  base_centavos integer not null check (base_centavos > 0),
+  iva_centavos integer not null check (iva_centavos >= 0),
+  total_centavos integer not null check (total_centavos > 0),
+  moneda text not null default 'USD',
+  proveedor text not null,
+  orden_proveedor text unique,
+  estado text not null default 'creado' check (estado in ('creado', 'pendiente', 'pagado', 'fallido', 'reembolsado')),
+  nombre text not null,
+  notaria text not null default '',
+  telefono text not null default '',
+  correo text not null default '',
+  documento text not null,
+  creado timestamptz not null default now(),
+  actualizado timestamptz not null default now(),
+  pagado_en timestamptz
+);
+create index if not exists pagos_planes_notaria_creado on pagos_planes (notaria_id, creado desc);
+alter table pagos_planes enable row level security;
+revoke all on pagos_planes from anon, authenticated;
+
+-- 2026-10-23c: turnero (fila virtual en la notaría). Ejecuta este bloque antes de encender la función «Turnos en la
+-- notaría». El número es correlativo por notaría y día; el código secreto le permite al cliente ver su turno sin cuenta.
+create table if not exists turnos (
+  id uuid primary key default gen_random_uuid(),
+  notaria_id text not null references notarias(id),
+  fecha date not null,
+  numero integer not null check (numero > 0),
+  nombre text not null check (length(nombre) between 2 and 60),
+  celular text check (celular ~ '^[0-9]{11,13}$'),
+  motivo text not null default '',
+  canal text not null default 'web' check (canal in ('web', 'whatsapp', 'recepcion')),
+  codigo text not null unique check (codigo ~ '^[0-9a-f]{24}$'),
+  estado text not null default 'esperando' check (estado in ('esperando', 'llamado', 'atendido', 'ausente', 'cancelado')),
+  ventanilla text not null default '',
+  creado timestamptz not null default now(),
+  llamado_en timestamptz,
+  atendido_en timestamptz,
+  unique (notaria_id, fecha, numero)
+);
+create index if not exists turnos_notaria_fecha on turnos (notaria_id, fecha, estado);
+alter table turnos enable row level security;
+revoke all on turnos from anon, authenticated;
+
+-- 2026-10-23d: canales nuevos en el historial de consentimientos (chat y formularios de SOFIA PreFirma, turnero). Ejecútalo
+-- antes de abrir el chat de ventas: sin él, esas aceptaciones no quedan registradas como evidencia (LOPDP, art. 8).
+alter table consentimientos drop constraint if exists consentimientos_canal_check;
+alter table consentimientos add constraint consentimientos_canal_check check (canal in ('formulario', 'chat-web', 'whatsapp', 'documentos', 'portal',
+  'chat-ventas', 'formulario-ventas', 'pago-plan', 'turnero'));

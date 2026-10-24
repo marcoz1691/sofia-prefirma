@@ -7,16 +7,17 @@
 <title>Sofía PreFirma · Cada trámite, listo para avanzar</title>
 <meta name="description" content="Atención, preparación documental, agenda y operación inteligente para notarías del Ecuador.">
 <meta name="theme-color" content="#11152B">
-<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/logo/sofia-prefirma-oficial-simbolo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/fonts/archivo.css">
 <link rel="stylesheet" href="assets/fonts/phosphor.css">
 <link rel="stylesheet" href="css/propuesta-sofia.css">
 <script src="js/propuesta-sofia.js" defer></script>
+<script type="module" src="js/ventas-chat.js"></script>
 </head>
 <body>
 <a class="skip" href="#contenido">Saltar al contenido</a>
 <header class="topbar">
-  <a class="marca" href="#inicio" aria-label="Sofía PreFirma, ir al inicio"><img src="assets/logo/sofia-prefirma.svg" alt="Sofía PreFirma"></a>
+  <a class="marca" href="#inicio" aria-label="Sofía PreFirma, ir al inicio"><img src="assets/logo/sofia-prefirma-oficial-blanco.svg" alt="SOFIA PreFirma"></a>
   <nav aria-label="Principal"><a href="#solucion">Productos</a><a href="#recorrido">PreFirma</a><a href="#calidad">Calidad</a><a href="#planes">Planes</a></nav>
   <a class="topbar__cta" href="#planes">Ver planes</a>
 </header>
@@ -25,15 +26,19 @@
     <div class="hero__fondo" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="hero__copy">
       <p class="sobretitulo">Sofía PreFirma · creada para notarías del Ecuador</p>
-      <h1>Convierte cada consulta en un trámite listo para avanzar.</h1>
+      <h1>Convierte cada consulta en un <span class="hero__acento">trámite listo para avanzar.</span></h1>
       <p class="hero__bajada">Sofía atiende, reúne documentos y mantiene cada pendiente bajo control antes de la firma. Tu equipo revisa. El notario decide.</p>
       <div class="hero__acciones"><a class="boton boton--claro" href="#planes">Conocer los planes <i class="ph ph-arrow-down" aria-hidden="true"></i></a><a class="boton boton--linea" href="#recorrido">Ver cómo funciona</a><button class="boton boton--linea" type="button" id="imprimir"><i class="ph ph-printer" aria-hidden="true"></i> Guardar en PDF</button></div>
-      <ul class="hero__sellos" aria-label="Ventajas principales"><li><i class="ph ph-check" aria-hidden="true"></i> Menos documentos pendientes</li><li><i class="ph ph-check" aria-hidden="true"></i> Menos visitas repetidas</li><li><i class="ph ph-check" aria-hidden="true"></i> Tu equipo conserva el control</li></ul>
+      <ul class="hero__sellos" aria-label="Ventajas principales"><li class="hero__sello-oferta"><i class="ph ph-sparkle" aria-hidden="true"></i> Primer mes gratis</li><li><i class="ph ph-check" aria-hidden="true"></i> Menos documentos pendientes</li><li><i class="ph ph-check" aria-hidden="true"></i> Menos visitas repetidas</li><li><i class="ph ph-check" aria-hidden="true"></i> Tu equipo conserva el control</li></ul>
     </div>
     <aside class="telefono" aria-label="Ejemplo de conversación con Sofía">
-      <div class="telefono__barra"><span></span><b>Sofía</b><small>en línea</small></div>
-      <div class="burbuja burbuja--cliente">Necesito vender una casa. ¿Qué debo llevar?</div>
-      <div class="burbuja">Primero revisemos quién vende, quién compra y si hay hipoteca. Con esas respuestas prepararé tu lista exacta.</div>
+      <div class="telefono__barra"><span><img src="assets/logo/sofia-prefirma-oficial-simbolo.svg" alt=""></span><b>Sofía</b><small>en línea</small></div>
+      <div class="telefono__casos" role="group" aria-label="Prueba una consulta"><button type="button" data-caso="compraventa" aria-pressed="true">Compraventa</button><button type="button" data-caso="poder" aria-pressed="false">Poder</button><button type="button" data-caso="sociedad" aria-pressed="false">Constitución</button></div>
+      <div aria-live="polite">
+        <div class="burbuja burbuja--cliente" id="demo-pregunta">Necesito vender una casa. ¿Qué debo llevar?</div>
+        <div class="burbuja" id="demo-respuesta">Primero revisemos quién vende, quién compra y si hay hipoteca. Con esas respuestas prepararé tu lista exacta.</div>
+        <div class="burbuja burbuja--estado"><i class="ph ph-check" aria-hidden="true"></i> Expediente iniciado · <span id="demo-avance">3 datos por confirmar</span></div>
+      </div>
       <div class="burbuja burbuja--cliente">¿Puedo enviar los documentos?</div>
       <div class="burbuja burbuja--estado"><i class="ph ph-shield-check" aria-hidden="true"></i> Sí. Antes te pediré autorización para tratarlos de forma segura.</div>
       <div class="telefono__pie"><span>Escribe tu consulta</span><i class="ph-fill ph-paper-plane-right" aria-hidden="true"></i></div>
@@ -50,12 +55,12 @@
   <section class="solucion" id="solucion">
     <header class="seccion-cab revelar"><p class="etiqueta">Una plataforma · seis módulos conectados</p><h2>Sofía PreFirma es el sistema completo. Estos son sus seis módulos.</h2><p>No son seis productos aislados: comparten la conversación, el expediente y el seguimiento. Cada plan activa los módulos que necesita tu notaría.</p></header>
     <div class="suite revelar">
-      <div class="suite__presentacion"><div><img src="assets/logo/sofia-prefirma.svg" alt=""><p>Una sola plataforma acompaña el caso desde la primera consulta hasta que queda listo para revisión.</p></div><span><i class="ph ph-arrows-clockwise" aria-hidden="true"></i> La información pasa de un módulo al siguiente sin volver a ingresarla.</span></div>
+      <div class="suite__presentacion"><div><img src="assets/logo/sofia-prefirma-oficial.svg" alt=""><p>Una sola plataforma acompaña el caso desde la primera consulta hasta que queda listo para revisión.</p></div><span><i class="ph ph-arrows-clockwise" aria-hidden="true"></i> La información pasa de un módulo al siguiente sin volver a ingresarla.</span></div>
       <div class="suite__modulos">
         <article><div><i class="ph ph-chats-circle" aria-hidden="true"></i><span>01 · Recibe</span></div><h3>Antesala</h3><strong>La puerta de entrada.</strong><p>Atiende en web y WhatsApp, identifica el trámite y recoge los primeros datos.</p></article>
         <article class="suite__nucleo"><div><i class="ph ph-list-checks" aria-hidden="true"></i><span>02 · Prepara</span></div><p class="suite__badge">Corazón de PreFirma</p><h3>Alista</h3><strong>Deja el caso listo.</strong><p>Crea requisitos según cada caso, reúne la información y mantiene visibles los pendientes.</p></article>
         <article><div><i class="ph ph-files" aria-hidden="true"></i><span>03 · Aclara</span></div><h3>Clara</h3><strong>Ordena los documentos.</strong><p>Clasifica lo recibido y señala datos que el personal debe comprobar.</p></article>
-        <article><div><i class="ph ph-calendar-check" aria-hidden="true"></i><span>04 · Coordina</span></div><h3>Pronta</h3><strong>Mueve la agenda.</strong><p>Gestiona solicitudes, confirmaciones, recordatorios y cambios de cita.</p></article>
+        <article><div><i class="ph ph-calendar-check" aria-hidden="true"></i><span>04 · Coordina</span></div><h3>Pronta</h3><strong>Mueve la agenda.</strong><p>Gestiona solicitudes, confirmaciones, recordatorios y cambios de cita. Desde PreFirma, también la fila del día con turnos por QR.</p></article>
         <article><div><i class="ph ph-user-switch" aria-hidden="true"></i><span>05 · Conecta</span></div><h3>Nexo</h3><strong>Une al equipo.</strong><p>Asigna cada caso a la persona correcta y conserva todo su contexto.</p></article>
         <article><div><i class="ph ph-chart-line-up" aria-hidden="true"></i><span>06 · Revela</span></div><h3>Lúcida</h3><strong>Convierte actividad en decisiones.</strong><p>Muestra uso, costos, tiempos y expedientes que necesitan atención.</p></article>
       </div>
@@ -82,15 +87,17 @@
     </div>
   </section>
   <section class="planes" id="planes">
-    <header class="planes__cab revelar"><div><p class="etiqueta">Prelanzamiento · primeras 10 notarías</p><h2>Elige el nivel de acompañamiento que necesita tu operación.</h2></div><div class="periodo" role="group" aria-label="Forma de pago"><button type="button" data-periodo="mensual" aria-pressed="true">Mensual</button><button type="button" data-periodo="anual" aria-pressed="false">Anual <span>2 meses gratis</span></button></div></header>
+    <header class="planes__cab revelar"><div><p class="etiqueta">Precios de lanzamiento · hasta el 31 de enero de 2027</p><h2>Elige el nivel de acompañamiento que necesita tu operación.</h2></div><div class="periodo" role="group" aria-label="Forma de pago"><button type="button" data-periodo="mensual" aria-pressed="true">Mensual</button><button type="button" data-periodo="anual" aria-pressed="false">Anual <span>2 meses gratis</span></button></div></header>
+    <div class="oferta revelar"><i class="ph ph-sparkle" aria-hidden="true"></i><p><strong>Prueba Sofía un mes gratis.</strong> Configuramos tu notaría y la usas 30 días con el plan que elijas, sin pagar nada. Si decides no continuar, no te cobramos.</p></div>
     <div class="planes__grid revelar">
+      <article class="plan plan--vitrina" data-mensual="0" data-plan="Vitrina"><header><p>Vitrina</p><h3>Tu notaría, abierta en línea</h3><span>Para que tus clientes encuentren requisitos y tarifas sin llamar.</span></header><div class="plan__precio plan__precio--texto"><strong>Sin mensualidad</strong></div><p class="plan__factura" aria-live="polite">Para siempre · sin tarjeta</p><div class="plan__productos"><span>Web</span><span>Catálogo</span><span>Calculadora</span></div><ul><li>Página web con tu marca en tunotaria.sofiaprefirma.com</li><li>Catálogo de trámites con requisitos y pasos</li><li>Calculadora de tarifas oficiales</li><li>Tu horario, dirección, teléfono y enlace a tu WhatsApp</li><li>Tú actualizas trámites y tarifas desde el panel</li><li>1 usuario del panel</li></ul><p class="plan__subir"><i class="ph ph-sparkle" aria-hidden="true"></i> Cuando tus clientes empiecen a escribir fuera de horario, activa a Sofía desde USD 59.</p><a class="boton boton--contorno elegir-plan" href="#piloto">Abrir mi Vitrina</a></article>
       <article class="plan" data-mensual="59" data-plan="Entrada"><header><p>Entrada</p><h3>Atiende y agenda</h3><span>Para ordenar la puerta digital de la notaría.</span></header><div class="plan__precio"><sup>USD</sup><strong>59</strong><span>/ mes</span></div><p class="plan__factura" aria-live="polite">Facturación mensual</p><div class="plan__productos"><span>Antesala</span><span>Pronta</span></div><ul><li>Web personalizada y catálogo de trámites</li><li>Sofía en la web</li><li>Requisitos, tarifas y citas</li><li>Hasta 250 conversaciones al mes</li><li>3 usuarios del panel</li></ul><a class="boton boton--oscuro elegir-plan" href="#piloto">Elegir Entrada</a></article>
-      <article class="plan plan--recomendado" data-mensual="119" data-plan="PreFirma"><div class="plan__badge">Más elegido</div><header><p>PreFirma</p><h3>Prepara expedientes</h3><span>Para hacer avanzar cada caso antes de la firma.</span></header><div class="plan__precio"><sup>USD</sup><strong>119</strong><span>/ mes</span></div><p class="plan__factura" aria-live="polite">Facturación mensual</p><div class="plan__productos"><span>Antesala</span><span>Pronta</span><span>Alista</span><span>Clara</span></div><ul><li>Todo el plan Entrada</li><li>Sofía en WhatsApp, 24/7</li><li>Checklist personalizado por caso</li><li>Recepción y clasificación documental</li><li>Hasta 600 conversaciones y 75 páginas al mes</li><li>5 usuarios del panel</li></ul><a class="boton boton--verde elegir-plan" href="#piloto">Elegir PreFirma</a></article>
+      <article class="plan plan--recomendado" data-mensual="119" data-plan="PreFirma"><div class="plan__badge">Más elegido</div><header><p>PreFirma</p><h3>Prepara expedientes</h3><span>Para hacer avanzar cada caso antes de la firma.</span></header><div class="plan__precio"><sup>USD</sup><strong>119</strong><span>/ mes</span></div><p class="plan__factura" aria-live="polite">Facturación mensual</p><div class="plan__productos"><span>Antesala</span><span>Pronta</span><span>Alista</span><span>Clara</span></div><ul><li>Todo el plan Entrada</li><li>Sofía en WhatsApp, 24/7</li><li>Checklist personalizado por caso</li><li>Recepción y clasificación documental</li><li>Turnos en la notaría: QR en la entrada, pantalla para la sala y aviso por WhatsApp</li><li>Hasta 600 conversaciones y 75 páginas al mes</li><li>5 usuarios del panel</li></ul><a class="boton boton--verde elegir-plan" href="#piloto">Elegir PreFirma</a></article>
       <article class="plan" data-mensual="149" data-plan="Equipo"><header><p>Equipo</p><h3>Coordina responsables</h3><span>Para notarías donde varias personas atienden y revisan.</span></header><div class="plan__precio"><sup>USD</sup><strong>149</strong><span>/ mes</span></div><p class="plan__factura" aria-live="polite">Facturación mensual</p><div class="plan__productos"><span>PreFirma</span><span>Nexo</span></div><ul><li>Todo el plan PreFirma</li><li>Asignación y seguimiento interno</li><li>Calendario conectado incluido</li><li>Checklist y observaciones en PDF con tu marca</li><li>Hasta 900 conversaciones y 150 páginas al mes</li><li>8 usuarios del panel</li></ul><a class="boton boton--oscuro elegir-plan" href="#piloto">Elegir Equipo</a></article>
       <article class="plan" data-mensual="179" data-plan="Integral"><header><p>Integral</p><h3>Mide toda la operación</h3><span>Para dirigir con visibilidad de tiempos, carga y costos.</span></header><div class="plan__precio"><sup>USD</sup><strong>179</strong><span>/ mes</span></div><p class="plan__factura" aria-live="polite">Facturación mensual</p><div class="plan__productos"><span>Los 6 módulos</span></div><ul><li>Todo el plan Equipo</li><li>Lúcida con métricas y costos</li><li>Encuesta y reputación incluidas</li><li>Hasta 1.500 conversaciones y 250 páginas al mes</li><li>15 usuarios y perfiles por rol</li><li>Exportación y respaldo diario</li></ul><a class="boton boton--oscuro elegir-plan" href="#piloto">Elegir Integral</a></article>
       <article class="plan plan--completo" data-mensual="229" data-plan="Integral Plus"><div class="plan__badge">Todo incluido</div><header><p>Integral Plus</p><h3>Escala con prioridad</h3><span>Para operaciones de mayor volumen que necesitan más capacidad.</span></header><div class="plan__precio"><sup>USD</sup><strong>229</strong><span>/ mes</span></div><p class="plan__factura" aria-live="polite">Facturación mensual</p><div class="plan__productos"><span>Suite completa</span><span>Integraciones</span></div><ul><li>Todo el plan Integral</li><li>Hasta 2.500 conversaciones y 500 páginas al mes</li><li>30 usuarios del panel</li><li>Calendario y PDF con marca incluidos</li><li>Soporte prioritario</li><li>Una integración personalizada por cotizar</li></ul><a class="boton boton--verde elegir-plan" href="#piloto">Elegir Integral Plus</a></article>
     </div>
-    <div class="precio-notas revelar"><p><i class="ph ph-sparkle" aria-hidden="true"></i><strong>Precio de prelanzamiento garantizado durante 12 meses.</strong> La activación está incluida con pago anual. Con pago mensual, se cotiza una sola vez según el plan y la configuración.</p><p>Precios más IVA. Incluyen alojamiento, mantenimiento y los límites indicados. El uso adicional se ofrece por bloques. Los mensajes de plantilla de WhatsApp se facturan al costo del proveedor.</p></div>
+    <div class="precio-notas revelar"><p><i class="ph ph-sparkle" aria-hidden="true"></i><strong>Precio de lanzamiento para las notarías que contraten hasta el 31 de enero de 2027, garantizado durante 12 meses.</strong> La activación está incluida con pago anual. Con pago mensual, se cotiza una sola vez según el plan y la configuración.</p><p>Precios más IVA. Incluyen alojamiento, mantenimiento y los límites indicados. El uso adicional se ofrece por bloques. Los mensajes de plantilla de WhatsApp se facturan al costo del proveedor.</p></div>
   </section>
   <section class="incluido">
     <header class="seccion-cab revelar"><p class="etiqueta">Puesta en marcha acompañada</p><h2>No te entregamos un sistema vacío.</h2><p>Configuramos la solución con la identidad y la operación de tu notaría para que el equipo pueda usarla desde el inicio.</p></header>
@@ -101,14 +108,77 @@
     <div class="extras revelar">
       <article><div><i class="ph ph-files" aria-hidden="true"></i><span>Desde USD 19</span></div><h3>Más capacidad documental</h3><p>Amplía la lectura asistida de Clara con bloques según el volumen documental.</p></article>
       <article><div><i class="ph ph-arrows-clockwise" aria-hidden="true"></i><span>Desde USD 29</span></div><h3>Integración personalizada</h3><p>Conecta una herramienta autorizada que la notaría ya utilice en su operación.</p></article>
-      <article><div><i class="ph ph-credit-card" aria-hidden="true"></i><span>Cotización</span></div><h3>Pagos para tus clientes</h3><p>Conecta la pasarela elegida por la notaría para cobrar trámites sin almacenar datos de tarjetas.</p></article>
+      <article><div><i class="ph ph-credit-card" aria-hidden="true"></i><span>Cotización</span></div><h3>Pagos en línea para tus clientes</h3><p>Tus clientes pagan su trámite con tarjeta desde «Mis trámites», a través de PagoMedios. Requiere el contrato de la notaría con PagoMedios; la tarjeta nunca pasa por tu sitio.</p></article>
     </div>
   </section>
   <section class="piloto" id="piloto">
-    <div class="piloto__copy revelar"><p class="etiqueta">¿Qué viene después?</p><h2 id="seleccion-titulo" aria-live="polite">De la demostración a una primera etapa controlada.</h2><p id="seleccion-texto">No tienes que implementar todo de una vez. Primero conoces Sofía, eliges el plan que mejor encaja con tu notaría y empezamos con los trámites que más consultas reciben. Luego revisamos los resultados contigo antes de ampliar.</p><div class="piloto__acciones"><button class="boton boton--claro" type="button" id="compartir"><i class="ph ph-share-network" aria-hidden="true"></i> Compartir propuesta</button><a class="boton boton--linea" href="#planes">Comparar los planes</a></div><p class="piloto__contacto"><strong>Tu siguiente paso:</strong> responde a la persona que te envió esta propuesta para coordinar una demostración. El cobro en línea se habilitará cuando la pasarela y la facturación estén configuradas.</p></div>
+    <div class="piloto__copy revelar"><p class="etiqueta">¿Qué viene después?</p><h2 id="seleccion-titulo" aria-live="polite">De la demostración a una primera etapa controlada.</h2><p id="seleccion-texto">No tienes que implementar todo de una vez. Primero conoces Sofía, eliges el plan que mejor encaja con tu notaría y empezamos con los trámites que más consultas reciben. Luego revisamos los resultados contigo antes de ampliar.</p><div class="piloto__acciones"><button class="boton boton--claro" type="button" id="compartir"><i class="ph ph-share-network" aria-hidden="true"></i> Compartir propuesta</button><a class="boton boton--linea" href="#planes">Comparar los planes</a></div><p class="piloto__contacto"><strong>Tu siguiente paso:</strong> responde a la persona que te envió esta propuesta o <button type="button" class="enlace-chat" data-abrir-chat>escríbele a Sofía</button> para coordinar una demostración. El cobro en línea se habilitará cuando la pasarela y la facturación estén configuradas.</p></div>
     <div class="piloto__pasos revelar" aria-label="Siguientes pasos"><div><span>01</span><strong>Conoces Sofía</strong><small>vemos una demostración aplicada a tu notaría</small></div><div><span>02</span><strong>Eliges cómo empezar</strong><small>definimos plan, trámites, canales y equipo</small></div><div><span>03</span><strong>La dejamos lista</strong><small>configuramos tu marca, información y accesos</small></div><div><span>04</span><strong>La usamos y medimos</strong><small>acompañamos al equipo y revisamos los resultados</small></div></div>
   </section>
 </main>
-<footer><div class="marca marca--pie"><img src="assets/logo/sofia-prefirma.svg" alt="Sofía PreFirma"></div><p>Cada trámite, listo para avanzar. Tu equipo revisa y el notario conserva la decisión.</p><a href="#inicio">Volver arriba <i class="ph ph-arrow-up" aria-hidden="true"></i></a></footer>
+<footer><div class="marca marca--pie"><img src="assets/logo/sofia-prefirma-oficial-blanco.svg" alt="SOFIA PreFirma"></div><p>Cada trámite, listo para avanzar. Tu equipo revisa y el notario conserva la decisión.</p><a href="#inicio">Volver arriba <i class="ph ph-arrow-up" aria-hidden="true"></i></a></footer>
+<dialog class="eleccion" id="eleccion" aria-labelledby="eleccion-titulo">
+  <form method="dialog"><button class="eleccion__cerrar" value="cerrar" aria-label="Cerrar"><i class="ph ph-x" aria-hidden="true"></i></button></form>
+  <div class="eleccion__plan">
+    <p class="eleccion__oferta" id="eleccion-oferta"><i class="ph ph-sparkle" aria-hidden="true"></i> Primer mes gratis</p>
+    <p class="eleccion__etiqueta">Elegiste el plan</p>
+    <h2 id="eleccion-titulo">Equipo</h2>
+    <p class="eleccion__lema" id="eleccion-lema"></p>
+    <div class="eleccion__precio"><sup id="eleccion-moneda">USD</sup><strong id="eleccion-precio">149</strong><span id="eleccion-sufijo">/ mes después de la prueba</span></div>
+    <p class="eleccion__factura" id="eleccion-factura">Facturación mensual</p>
+    <div class="eleccion__periodo" id="eleccion-periodo" role="group" aria-label="Forma de pago"><button type="button" data-e-periodo="mensual" aria-pressed="true">Mensual</button><button type="button" data-e-periodo="anual" aria-pressed="false">Anual · 2 meses gratis</button></div>
+    <ul class="eleccion__incluye" id="eleccion-incluye"></ul>
+  </div>
+  <div class="eleccion__lado">
+    <form class="eleccion__form" id="eleccion-form" novalidate>
+      <h3 id="eleccion-form-titulo">Empieza tu mes gratis</h3>
+      <ol class="eleccion__pasos" id="eleccion-pasos"><li>Nos dejas tus datos.</li><li>En un día hábil te llamamos y vemos una demostración con tus trámites.</li><li>Configuramos tu marca, trámites y WhatsApp.</li><li>Usas Sofía 30 días gratis y decides si continúas.</li></ol>
+      <div class="eleccion__campos">
+        <label for="e-nombre">Tu nombre<input id="e-nombre" name="nombre" autocomplete="name" maxlength="80" required></label>
+        <label for="e-notaria">Notaría<input id="e-notaria" name="notaria" placeholder="Ej.: Notaría 12 de Cuenca" maxlength="120" required></label>
+        <label for="e-ciudad">Ciudad<input id="e-ciudad" name="ciudad" autocomplete="address-level2" maxlength="60"></label>
+        <label for="e-cargo">Tu cargo<select id="e-cargo" name="cargo"><option value="Notario o notaria">Notario o notaria</option><option value="Personal de la notaría">Personal de la notaría</option><option value="Otro">Otro</option></select></label>
+        <label for="e-telefono">Celular (WhatsApp)<input id="e-telefono" name="telefono" type="tel" autocomplete="tel" inputmode="tel" placeholder="099 123 4567" maxlength="30" required></label>
+        <label for="e-correo">Correo <small>(opcional)</small><input id="e-correo" name="correo" type="email" autocomplete="email" maxlength="200"></label>
+      </div>
+      <label class="eleccion__casilla"><input type="checkbox" name="aceptaTerminos"> <span>Acepto los <a href="prefirma-terminos.html" target="_blank" rel="noopener">términos y condiciones</a>.</span></label>
+      <label class="eleccion__casilla"><input type="checkbox" name="aceptaDatos"> <span>Autorizo el tratamiento de mis datos según el <a href="prefirma-privacidad.html" target="_blank" rel="noopener">aviso de privacidad</a>.</span></label>
+      <p class="eleccion__error" id="eleccion-error" role="alert" hidden></p>
+      <button type="submit" class="boton boton--verde eleccion__enviar" id="eleccion-enviar">Empezar mi mes gratis</button>
+      <p class="eleccion__nota">Sin tarjeta ni pago por adelantado. Precios más IVA.</p>
+    </form>
+    <div class="eleccion__listo" id="eleccion-listo" hidden tabindex="-1">
+      <i class="ph ph-check" aria-hidden="true"></i>
+      <h3 id="eleccion-listo-titulo">Listo.</h3>
+      <p id="eleccion-listo-texto"></p>
+      <div class="eleccion__pagar" id="eleccion-pagar" role="group" aria-labelledby="eleccion-pagar-titulo" hidden>
+        <h4 id="eleccion-pagar-titulo">Asegura tu precio de lanzamiento</h4>
+        <p>Si prefieres, paga ahora tu primer período con tarjeta. Tu mes de prueba sigue siendo gratis: lo que pagas empieza cuando termine.</p>
+        <p class="eleccion__total" id="eleccion-total"></p>
+        <label for="e-documento">Cédula o RUC para tu factura<input id="e-documento" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="10 o 13 dígitos"></label>
+        <p class="eleccion__error" id="eleccion-pago-error" role="alert" hidden></p>
+        <button type="button" class="boton boton--verde" id="eleccion-ir-pagar">Pagar con tarjeta</button>
+        <a class="boton boton--verde" id="eleccion-enlace-pago" href="#" target="_blank" rel="noopener" hidden>Abrir la página de pago segura</a>
+        <button type="button" class="boton boton--contorno" id="eleccion-ya-pague" hidden>Ya pagué, revisar</button>
+        <p class="eleccion__pago-estado" id="eleccion-pago-estado" role="status"></p>
+        <p class="eleccion__nota">El pago lo procesa PagoMedios. Tu tarjeta nunca pasa por este sitio.</p>
+      </div>
+      <button type="button" class="boton boton--oscuro" data-abrir-chat>Mientras tanto, pregúntale a Sofía</button>
+    </div>
+  </div>
+</dialog>
+<button class="vchat__abrir" id="vchat-abrir" type="button" aria-controls="vchat" aria-expanded="false" aria-label="Habla con Sofía"><img src="assets/logo/sofia-prefirma-oficial-simbolo.svg" alt=""><span>Habla con Sofía</span></button>
+<div class="vchat" id="vchat" role="dialog" aria-labelledby="vchat-titulo" hidden>
+  <header class="vchat__cab"><span class="vchat__avatar"><img src="assets/logo/sofia-prefirma-oficial-simbolo.svg" alt=""></span><div><b id="vchat-titulo">Sofía</b><small>Asesora de SOFIA PreFirma · responde al instante</small></div><button class="vchat__cerrar" id="vchat-cerrar" type="button" aria-label="Cerrar el chat"><i class="ph ph-x" aria-hidden="true"></i></button></header>
+  <div class="vchat__hilo" id="vchat-hilo" aria-live="polite">
+    <div class="vchat__inicio" id="vchat-inicio">
+      <p>Hola, soy Sofía. Te ayudo a elegir el plan para tu notaría, resuelvo tus dudas o coordino una demostración.</p>
+      <div class="vchat__sugerencias" id="vchat-sugerencias"><button type="button" data-p="¿Qué plan me conviene para mi notaría?">¿Qué plan me conviene?</button><button type="button" data-p="¿Cuánto cuesta y qué incluye cada plan?">Precios y planes</button><button type="button" data-p="Quiero una demostración para mi notaría.">Quiero una demostración</button><button type="button" data-p="¿Cómo protege SOFIA PreFirma los datos de los clientes de mi notaría?">Privacidad y seguridad</button></div>
+    </div>
+    <div class="vchat__mensajes" id="vchat-mensajes"></div>
+  </div>
+  <form class="vchat__caja" id="vchat-form"><textarea id="vchat-texto" rows="1" maxlength="1000" placeholder="Escribe tu pregunta" aria-label="Escribe tu pregunta"></textarea><button type="submit" id="vchat-enviar" aria-label="Enviar" disabled><i class="ph ph-arrow-up" aria-hidden="true"></i></button></form>
+  <p class="vchat__nota">Respuestas automáticas con IA: pueden equivocarse. Un asesor confirma precios y condiciones.</p>
+</div>
 </body>
 </html>

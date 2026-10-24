@@ -1,5 +1,6 @@
 import { FUNCIONES, leerFunciones } from "./funciones.js";
-import { registrar, canalDeTelefono, CLAVES, PRECIOS } from "./metricas.js";
+import { registrar, canalDeTelefono, CLAVES, PRECIOS, costoIa } from "./metricas.js";
+import { filaDelDia, llamarSiguiente, marcarTurno } from "./turnos.js";
 import { reglasCitas, fechaQuito, fechaValida } from "./citas.js";
 import { minutos } from "../../js/nucleo.js";
 // Acciones del panel del personal sobre conversaciones, citas y documentos.
@@ -69,7 +70,8 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
     return rol;
   }
   return {
-    async yo(email) { const p = (await almacen.equipo()).find(p => p.email === email); return { email, nombre: p?.nombre || "", rol: await almacen.rolDe(email) }; },
+    // «plan» lo fija el administrador de SOFIA PreFirma en los ajustes de cada notaría (por ejemplo, Vitrina).
+    async yo(email) { const p = (await almacen.equipo()).find(p => p.email === email); return { email, nombre: p?.nombre || "", rol: await almacen.rolDe(email), plan: String((await almacen.ajustes()).plan || "") }; },
     async equipo(por) {
       const rol = await permitir(por, ["admin", "notario"]);
       return { miembros: await almacen.equipo(), yo: por, rol };
@@ -144,7 +146,7 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
         const guardado = ajustes["metricas.precio." + k], n = Number(guardado);
         return [k, guardado != null && Number.isFinite(n) && n >= 0 && n <= 1000 ? n : v];
       }));
-      const ia = (totales["ia.tokens_entrada"] * precios.entrada + totales["ia.tokens_salida"] * precios.salida + totales["ia.tokens_cache_lectura"] * precios.cacheLectura + totales["ia.tokens_cache_escritura"] * precios.cacheEscritura) / 1e6;
+      const ia = costoIa(totales, precios);
       const whatsapp = (totales["recordatorio.enviado"] + totales["respuesta.automatica"]) * precios.plantillaWhatsapp;
       const conversaciones = ["whatsapp", "web", "formulario"].reduce((s,c) => s + totales["conv.nueva." + c], 0);
       return { desde, hasta, pilotoInicio: ajustes["piloto.inicio"] || null, totales, porDia: [...dias].sort(([a],[b]) => a.localeCompare(b)).map(([fecha,valores]) => ({ fecha, valores })), precios, costo: { ia, whatsapp, total: ia + whatsapp, porConversacion: conversaciones ? ia / conversaciones : 0 } };
@@ -277,6 +279,10 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
       return (await almacen.citasPorCodigo(codigo, hoy)).map((x) => ({ ...x, canal: canalDe(x.telefonoConversacion), tramite: (C.data.tramites.find((t) => t.id === x.tramiteId) || {}).nombre || "Por definir" }));
     },
 
+    // Turnero: la fila del día, llamar al siguiente (avisa por WhatsApp si el cliente dejó su celular) y cerrar turnos.
+    async fila() { return filaDelDia(almacen, ahora().getTime()); },
+    async llamarSiguiente(ventanilla) { return llamarSiguiente(almacen, { ventanilla, whatsapp, plantilla: process.env.TURNO_PLANTILLA || "turno_llamado", ahora: ahora().getTime() }); },
+    async marcarTurno(id, estado) { return marcarTurno(almacen, { id, estado }, ahora().getTime()); },
     async asignarCita(citaId, persona) {
       if (!(await almacen.cita(citaId))) throw new Aviso("Cita no encontrada");
       if (String(persona || "").length > 60) throw new Aviso("El nombre de la persona asignada es demasiado largo.");

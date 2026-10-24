@@ -6,10 +6,10 @@ import { AVISO_PRIVACIDAD, TERMINOS } from "./privacidad.js";
 // El titular se guarda como huella del celular o de la sesión, nunca en claro: basta para ubicar su aceptación si la pide.
 export const huellaTitular = (id) => createHash("sha256").update("notaria41:titular:" + String(id)).digest("hex").slice(0, 32);
 
-export async function registrarConsentimiento(almacen, { canal, titular, texto, terminos = true, t = new Date() }) {
+export async function registrarConsentimiento(almacen, { canal, titular, texto, terminos = true, t = new Date(), versiones = { aviso: AVISO_PRIVACIDAD, terminos: TERMINOS } }) {
   try {
-    await almacen.registrarConsentimiento({ canal, titular: huellaTitular(titular), aviso: AVISO_PRIVACIDAD,
-      terminos: terminos ? TERMINOS : "", texto: String(texto || "").slice(0, 500), creado: t.toISOString() });
+    await almacen.registrarConsentimiento({ canal, titular: huellaTitular(titular), aviso: versiones.aviso,
+      terminos: terminos ? versiones.terminos : "", texto: String(texto || "").slice(0, 500), creado: t.toISOString() });
   } catch (e) {
     // La conversación ya guarda su propia evidencia: si el historial falla (por ejemplo, sin la migración), no se corta la atención.
     console.error("Consentimiento no registrado en el historial:", e?.message || e);

@@ -63,3 +63,32 @@ No uses el checkout principal: su `.vercel/project.json` apunta al proyecto inst
 - Para volver a la versión anterior del piloto, usa `npx vercel@65.0.0 promote dpl_59bwjg9wTfutDtx1NVsiGPWHQ4Mw --yes` desde un checkout que haya pasado `npm run vercel:verificar:piloto` y que no contenga cron jobs.
 - Para volver a la versión comercial validada, usa `vercel promote dpl_6VhdaVfgNCZ2DZeL8wE4vnaRcb8N --yes` desde un checkout que haya pasado `npm run vercel:verificar:comercial`.
 - No promociones el deployment del piloto ni le asignes `notaria41.sofiaprefirma.com` hasta completar las variables, migraciones y puertas G1–G2 del plan maestro.
+
+## Chat de ventas en el sitio comercial
+
+`propuesta-sofia.html` incluye a Sofía como asesora de ventas y atención (`js/ventas-chat.js` → `/api/ventas`). Reutiliza el almacén, las sesiones, los límites y las casillas de consentimiento del chat de la notaría, en su propio tenant `sofia-ventas`, y registra a los interesados en la tabla `prospectos` con un aviso por WhatsApp. El botón «Elegir plan» abre una ventana con el resumen del plan y el formulario del mes gratis, que llega a la misma tabla (`accion: "solicitar"`, motivo `contratar`) sin pasar por Claude. Ambos modelos se eligen solos: Claude Sonnet 5.5 para consultas comunes y Claude Opus 5.5 para casos complejos o con documentos (`api/_lib/modelos.js`). En el sitio comercial el middleware solo deja pasar `/api/ventas`; el resto de la API sigue cerrado.
+
+Antes de desplegarlo en el proyecto `sofiaprefirma`:
+
+1. Hecho el 2026-10-23: el bloque «2026-10-23: chat de ventas de SOFIA PreFirma» de `supabase/esquema.sql` está aplicado en el proyecto `xzvggllcsbhmmstoaspt` (tenant `sofia-ventas` y tabla `prospectos` con RLS, sin acceso para `anon`).
+2. Hecho: los textos legales tienen los datos del responsable (Marco Zurita Rojas, RUC 1716163660001). Si cambias el texto, sube las versiones `AVISO_PRIVACIDAD_PREFIRMA` y `TERMINOS_PREFIRMA` en `js/legal.js`.
+3. Configura en el proyecto comercial: `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NOTARIA_ID=sofia-ventas`, `HUELLA_IP_SECRETO` (32 bytes o más), `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `AVISOS_WHATSAPP=593983207754` (recibe cada interesado) y `VENTAS_WHATSAPP=593983207754` (Sofía ofrece hablar con una persona por ese número). Opcional: `VENTAS_EFFORT` (por defecto `low`).
+4. Pendiente: el proyecto comercial no tiene cron jobs, así que la purga de 90 días que promete el aviso de privacidad todavía no corre para `sofia-ventas`. Prográmala antes de abrir el chat al público.
+
+## Pagos en línea con PagoMedios
+
+La pasarela es PagoMedios (Abitmedia, API v2: `https://api.abitmedia.cloud/pagomedios/v2/payment-requests`, autenticación `Bearer`). Se usa en dos lugares:
+
+- **Planes de SOFIA PreFirma** (sitio comercial): en «Elegir plan», después de enviar la solicitud, la notaría puede pagar su primer período (`/api/ventas`, acciones `pagar` y `estadoPago`, aviso en `/api/ventas?aviso=plan`). Tabla `pagos_planes`.
+- **Trámites de cada notaría** (portal «Mis trámites»): `/api/pagos` ya usa el mismo proveedor; falta el botón «Pagar en línea» en `mis-tramites.html`.
+
+Cómo funciona: el servidor fija el monto (precio + IVA 15 %) y PagoMedios aloja la página de pago, así que la tarjeta nunca pasa por el sitio. El aviso de PagoMedios no tiene una firma pública documentada: nuestro enlace de aviso lleva un HMAC propio y el estado siempre se confirma consultando la API con nuestro token. El estado solo pasa a «pagado» si el monto coincide.
+
+Para probar:
+
+1. Pide a PagoMedios el acceso a la API (firma electrónica del acuerdo) y el token de pruebas.
+2. Ejecuta en Supabase el bloque «2026-10-23b: pago en línea de los planes».
+3. Configura `PAGOS_PROVEEDOR=pagomedios`, `PAGOMEDIOS_TOKEN` (de pruebas) y `PAGOS_SECRETO` (32 caracteres o más) en un preview. `PAGOMEDIOS_API` permite cambiar la dirección base si PagoMedios entrega una de pruebas distinta.
+4. Paga un plan con una tarjeta de prueba y comprueba que el aviso llega, que `pagos_planes` pasa a `pagado` y que recibes el WhatsApp.
+
+Pendiente de confirmar con la documentación oficial: el formato exacto del aviso (`notify_url`), si la consulta devuelve `amount` en dólares y si la solicitud admite una URL de retorno.
