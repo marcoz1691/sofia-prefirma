@@ -5,10 +5,10 @@ export const TENANT_VENTAS = "sofia-ventas";
 export const PLANES = [
   { nombre: "Vitrina", mensual: 0, lema: "Tu notaría, abierta en línea", para: "que los clientes encuentren requisitos y tarifas sin llamar",
     modulos: ["web", "catálogo", "calculadora"],
-    incluye: ["Página web con la marca de la notaría en tunotaria.sofiaprefirma.com", "Catálogo de trámites con requisitos y pasos", "Calculadora de tarifas oficiales", "Horario, dirección, teléfono y enlace al WhatsApp de la notaría", "La notaría actualiza trámites y tarifas desde el panel", "1 usuario del panel", "No incluye a Sofía ni turnos: no responde chats ni WhatsApp, no agenda, no recibe documentos ni maneja la fila"] },
+    incluye: ["Página web con la marca de la notaría", "Catálogo de trámites con requisitos y pasos", "Calculadora de tarifas oficiales", "1 usuario del panel", "No incluye a Sofía: no responde chats ni WhatsApp, no agenda, no recibe documentos ni maneja la fila"] },
   { nombre: "Entrada", mensual: 59, lema: "Atiende y agenda", para: "ordenar la puerta digital de la notaría",
     modulos: ["Antesala", "Pronta"],
-    incluye: ["Web personalizada y catálogo de trámites", "Sofía en la web", "Requisitos, tarifas y citas", "Hasta 250 conversaciones al mes", "3 usuarios del panel"] },
+    incluye: ["Web personalizada y catálogo de trámites", "Calculadora de tarifas oficiales", "Sofía en la web", "Requisitos, tarifas y citas", "Hasta 250 conversaciones al mes", "3 usuarios del panel"] },
   { nombre: "PreFirma", mensual: 119, lema: "Prepara expedientes", para: "hacer avanzar cada caso antes de la firma", masElegido: true,
     modulos: ["Antesala", "Pronta", "Alista", "Clara"],
     incluye: ["Todo el plan Entrada", "Sofía en WhatsApp, 24/7", "Checklist personalizado por caso", "Recepción y clasificación documental", "Turnos en la notaría: QR en la entrada, pantalla para la sala y aviso por WhatsApp cuando llaman al cliente", "Hasta 600 conversaciones y 75 páginas al mes", "5 usuarios del panel"] },
@@ -35,7 +35,7 @@ export const MODULOS = [
 export const AMPLIACIONES = [
   ["Más capacidad documental", "desde USD 19", "amplía la lectura asistida de Clara con bloques según el volumen documental"],
   ["Integración personalizada", "desde USD 29", "conecta una herramienta autorizada que la notaría ya utilice"],
-  ["Pagos en línea para tus clientes", "por cotización", "los clientes pagan su trámite con tarjeta desde «Mis trámites» a través de PagoMedios; requiere el contrato de la notaría con PagoMedios y la tarjeta nunca pasa por el sitio"],
+  ["Pagos con tarjeta para tus clientes", "próximamente", "tus clientes podrán pagar su trámite con tarjeta desde «Mis trámites»; lo estamos preparando"],
 ];
 
 const anual = (m) => Math.round(m * 10 / 12);
@@ -89,5 +89,5 @@ Por qué es confiable:
 
 Puesta en marcha incluida: configuración de marca (colores, logotipo, dominio, canales), carga inicial de trámites, requisitos, tarifas y preguntas frecuentes, acompañamiento para conectar el WhatsApp de la notaría, perfiles del equipo y una sesión de capacitación.
 
-Cómo se empieza: 1) una demostración aplicada a la notaría; 2) se definen plan, trámites, canales y equipo; 3) se configura marca, información y accesos; 4) se usa, se acompaña al equipo y se revisan los resultados antes de ampliar. El cobro en línea se habilitará cuando la pasarela y la facturación estén configuradas: por ahora, la contratación se coordina con un asesor.`;
+Cómo se empieza: 1) una demostración aplicada a la notaría; 2) se definen plan, trámites, canales y equipo; 3) se configura marca, información y accesos; 4) se usa, se acompaña al equipo y se revisan los resultados antes de ampliar. Los pagos con tarjeta llegarán próximamente: por ahora, la contratación se coordina con un asesor.`;
 }

@@ -61,7 +61,7 @@ test("@movil la propuesta cabe y conserva planes e integraciones", async ({ page
   test.skip(!isMobile, "Solo aplica al proyecto móvil");
   await page.goto("/propuesta-sofia.html");
   await expect(page.getByText("Prepara expedientes", { exact: true })).toBeVisible();
-  await expect(page.getByText("Pagos en línea para tus clientes")).toBeVisible();
+  await expect(page.getByText("Pagos con tarjeta para tus clientes")).toBeVisible();
   const cabe = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
   expect(cabe).toBe(true);
 });
@@ -85,8 +85,7 @@ test("elegir un plan abre la ventana del mes gratis y envía la solicitud", asyn
   await dialogo.getByRole("checkbox", { name: /tratamiento de mis datos/ }).check();
   await dialogo.getByRole("button", { name: "Empezar mi mes gratis" }).click();
   await expect(dialogo.locator("#eleccion-listo")).toContainText("Recibimos tu solicitud del plan Equipo");
-  await expect(dialogo.locator("#eleccion-total")).toHaveText("USD 1.713,50 con IVA · plan Equipo, pago anual");
-  await expect(dialogo.getByRole("button", { name: "Pagar con tarjeta" })).toBeVisible();
+  await expect(dialogo.getByRole("button", { name: /Pagar con tarjeta · próximamente/ })).toBeDisabled();
   expect(cuerpo).toMatchObject({ accion: "solicitar", plan: "Equipo", periodo: "anual", nombre: "Lucía Andrade", telefono: "099 123 4567", aceptaTerminos: true, aceptaDatos: true });
   await page.keyboard.press("Escape");
   await expect(dialogo).toBeHidden();

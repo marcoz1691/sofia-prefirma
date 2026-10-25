@@ -77,8 +77,7 @@ document.querySelector("#imprimir").addEventListener("click", () => window.print
 const eleccion = document.querySelector("#eleccion");
 const formEleccion = document.querySelector("#eleccion-form");
 const errorEleccion = document.querySelector("#eleccion-error");
-let planElegido = null, periodoElegido = "mensual", solicitud = null, pagoPlanId = null;
-const dinero = (centavos) => "USD " + (centavos / 100).toLocaleString("es-EC", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+let planElegido = null, periodoElegido = "mensual";
 
 const PASOS_PRUEBA = ["Nos dejas tus datos.", "En un día hábil te llamamos y vemos una demostración con tus trámites.", "Configuramos tu marca, trámites y WhatsApp.", "Usas Sofía 30 días gratis y decides si continúas."];
 const PASOS_VITRINA = ["Nos dejas tus datos.", "Cargamos tu catálogo de trámites y tarifas.", "Publicamos tu web con tu marca.", "Cuando quieras, activas a Sofía y empiezas tu mes de prueba."];
@@ -152,10 +151,6 @@ formEleccion?.addEventListener("submit", async (evento) => {
     const listo = document.querySelector("#eleccion-listo");
     document.querySelector("#eleccion-listo-titulo").textContent = `Listo, ${datos.nombre.trim().split(" ")[0]}.`;
     document.querySelector("#eleccion-listo-texto").textContent = `Recibimos tu solicitud del plan ${planElegido.dataset.plan}. En un día hábil te escribiremos al ${datos.telefono.trim()} para ${Number(planElegido.dataset.mensual) === 0 ? "cargar tu catálogo y publicar tu Vitrina" : "coordinar la demostración y activar tu mes gratis"}.`;
-    solicitud = { ...datos, plan: planElegido.dataset.plan, periodo: periodoElegido };
-    pagoPlanId = null;
-    mostrarPagoPlan();
-    document.querySelector("#eleccion-periodo").hidden = true;
     listo.hidden = false; listo.focus();
     formEleccion.reset();
   } catch (error) {
@@ -181,55 +176,3 @@ if ("IntersectionObserver" in window) {
 } else document.querySelectorAll(".revelar").forEach(elemento => elemento.classList.add("visible"));
 
 mostrarPeriodo("mensual");
-
-// Pago en línea del plan con PagoMedios: el monto lo decide el servidor; aquí solo se muestra la referencia.
-function mostrarPagoPlan() {
-  const mensual = Number(planElegido.dataset.mensual), bloque = document.querySelector("#eleccion-pagar");
-  bloque.hidden = !mensual;
-  if (!mensual) return;
-  const base = mensual * (solicitud.periodo === "anual" ? 10 : 1) * 100;
-  document.querySelector("#eleccion-total").textContent = `${dinero(base + Math.round(base * 0.15))} con IVA · plan ${solicitud.plan}, pago ${solicitud.periodo}`;
-  document.querySelector("#eleccion-ir-pagar").hidden = false;
-  document.querySelector("#eleccion-enlace-pago").hidden = true;
-  document.querySelector("#eleccion-ya-pague").hidden = true;
-  document.querySelector("#eleccion-pago-estado").textContent = "";
-  document.querySelector("#eleccion-pago-error").hidden = true;
-}
-
-async function pedirVentas(cuerpo) {
-  const r = await fetch("/api/ventas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
-  const respuesta = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(respuesta.error || "No pudimos completar el pago en línea. Inténtalo más tarde.");
-  return respuesta;
-}
-
-document.querySelector("#eleccion-ir-pagar")?.addEventListener("click", async (evento) => {
-  const boton = evento.currentTarget, error = document.querySelector("#eleccion-pago-error");
-  const documento = document.querySelector("#e-documento").value.replace(/\D/g, "");
-  error.hidden = true;
-  if (!/^\d{10}(\d{3})?$/.test(documento)) { error.textContent = "Escribe tu cédula (10 dígitos) o RUC (13 dígitos)."; error.hidden = false; document.querySelector("#e-documento").focus(); return; }
-  boton.disabled = true; boton.textContent = "Preparando el pago…";
-  try {
-    const r = await pedirVentas({ accion: "pagar", ...solicitud, documento, aceptaTerminos: true, aceptaDatos: true });
-    pagoPlanId = r.id;
-    const enlace = document.querySelector("#eleccion-enlace-pago");
-    enlace.href = r.urlCheckout; enlace.hidden = false; boton.hidden = true;
-    document.querySelector("#eleccion-ya-pague").hidden = false;
-    document.querySelector("#eleccion-pago-estado").textContent = "Abre la página de pago, completa el pago y vuelve aquí.";
-    enlace.focus();
-  } catch (e) {
-    error.textContent = e instanceof TypeError ? "Sin conexión. Revisa tu internet e inténtalo de nuevo." : e.message; error.hidden = false;
-  } finally { boton.disabled = false; boton.textContent = "Pagar con tarjeta"; }
-});
-
-document.querySelector("#eleccion-ya-pague")?.addEventListener("click", async () => {
-  const estado = document.querySelector("#eleccion-pago-estado");
-  estado.textContent = "Revisando con PagoMedios…";
-  try {
-    const r = await pedirVentas({ accion: "estadoPago", id: pagoPlanId });
-    estado.textContent = r.estado === "pagado" ? `Pago recibido. Tu precio de lanzamiento del plan ${r.plan} quedó asegurado.`
-      : r.estado === "fallido" ? "El pago no se completó. Puedes intentarlo otra vez o esperar el enlace del asesor."
-      : "Todavía no vemos el pago. Si ya pagaste, espera un minuto y vuelve a revisar.";
-    if (r.estado === "pagado") { document.querySelector("#eleccion-enlace-pago").hidden = true; document.querySelector("#eleccion-ya-pague").hidden = true; }
-  } catch (e) { estado.textContent = e.message; }
-});
