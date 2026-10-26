@@ -5,6 +5,7 @@ const RECURSOS_COMERCIALES = new Set([
   "/propuesta-sofia.html",
   "/css/propuesta-sofia.css",
   "/js/propuesta-sofia.js",
+  "/js/movimiento.js",
   "/assets/logo/sofia-prefirma-oficial.svg",
   "/assets/logo/sofia-prefirma-oficial-blanco.svg",
   "/assets/logo/sofia-prefirma-oficial-simbolo.svg",
