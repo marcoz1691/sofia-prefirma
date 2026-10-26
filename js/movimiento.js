@@ -33,18 +33,18 @@
     const partes = $$(clave ? PARTES[clave] : ":scope > *", bloque);
     return partes.length > 1 ? partes : [bloque];
   };
+  // Cada parte se vigila por separado y su animación empieza un poco antes de entrar a la pantalla: así nunca se ve
+  // completa, desaparece y vuelve (el parpadeo que se notaba al bajar). Lo que ya está a la vista al cargar no se anima.
   const revelar = $$(".revelar");
   if ("IntersectionObserver" in window) {
     const observador = new IntersectionObserver((entradas) => {
-      for (const e of entradas) {
-        if (!e.isIntersecting) continue;
-        e.target.classList.add("visible");
-        partesDe(e.target).forEach((parte, i) => entrar(parte, Math.min(i, 6) * 90));
-        observador.unobserve(e.target);
-      }
-    }, { threshold: .12, rootMargin: "0px 0px -8% 0px" });
-    // Lo que ya está a la vista al cargar no se vuelve a animar: aparece con el inicio.
-    revelar.forEach((el) => (el.getBoundingClientRect().top < innerHeight * .9 ? el.classList.add("visible") : observador.observe(el)));
+      const nuevas = entradas.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      nuevas.forEach((e, i) => { entrar(e.target, Math.min(i, 5) * 80); observador.unobserve(e.target); });
+    }, { rootMargin: "0px 0px 15% 0px" });
+    for (const bloque of revelar) {
+      bloque.classList.add("visible");
+      for (const parte of partesDe(bloque)) if (parte.getBoundingClientRect().top > innerHeight) observador.observe(parte);
+    }
   } else revelar.forEach((el) => el.classList.add("visible"));
 
   // 3. La frase del problema se enciende palabra por palabra mientras se lee.
@@ -85,7 +85,7 @@
       pasos.style.setProperty("--avance", avance.toFixed(3));
       listaPasos.forEach((li, i) => li.classList.toggle("activo", avance >= i / listaPasos.length + .04));
     }
-    if (telefono && !reducir && innerWidth > 960) telefono.style.translate = `0 ${(-acotar(scrollY / alto) * 60).toFixed(1)}px`;
+    if (telefono && !reducir && innerWidth > 960) telefono.style.translate = `0 ${(acotar(scrollY / alto) * 45).toFixed(1)}px`;
   };
   addEventListener("scroll", () => { if (!pendiente) { pendiente = true; requestAnimationFrame(actualizar); } }, { passive: true });
   addEventListener("resize", actualizar);
