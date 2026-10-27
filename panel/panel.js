@@ -154,6 +154,11 @@ async function mostrarApp() {
     $("#perfilSesion").textContent = perfiles[rolSesion] || "";
     $("#perfilSesion").hidden = false;
     $("[data-tab=funcionesV]").hidden = rolSesion !== "admin";
+    // El panel de SOFIA PreFirma muestra sus prospectos; no la agenda, la fila ni los trámites de una notaría.
+    const ventas = yo.producto === "ventas";
+    $("[data-tab=prospectosV]").hidden = !ventas;
+    for (const pestana of ["agendaV", "preciosV", "filaV"]) { const boton = document.querySelector(`[data-tab=${pestana}]`); if (boton) boton.hidden = ventas; }
+    if (ventas && !["app", "prospectosV", "metricasV", "equipoV", "funcionesV"].includes(pestanaActual)) pestanaActual = "app";
     $("[data-tab=metricasV]").hidden = rolSesion !== "admin";
     $("[data-tab=equipoV]").hidden = !["admin", "notario"].includes(rolSesion);
     if ((["funcionesV", "metricasV"].includes(pestanaActual) && rolSesion !== "admin") || (pestanaActual === "equipoV" && !["admin", "notario"].includes(rolSesion))) pestanaActual = "app";
@@ -278,6 +283,8 @@ function pestana(id) {
   if (id === "funcionesV") cargarFuncionesPanel();
   if (id === "metricasV") cargarMetricas();
   $("#preciosV").hidden = id !== "preciosV";
+  $("#prospectosV").hidden = id !== "prospectosV";
+  if (id === "prospectosV") cargarProspectos();
   if (id === "preciosV") cargarPreciosPanel();
   $("#filaV").hidden = id !== "filaV";
   clearInterval(relojFila);
@@ -786,3 +793,12 @@ $("#filaLista").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-turno]"); if (!b) return;
   try { pintarFila(await api("POST", { accion: "marcarTurno", id: b.dataset.turno, estado: b.dataset.estado })); } catch (err) { $("#filaMensaje").textContent = err.message; }
 });
+
+/* ---------- Prospectos: interesados de SOFIA PreFirma (solo producto de ventas) ---------- */
+const CONTACTO_TEXTO = { demostracion: "Demostración", cotizacion: "Cotización", contratar: "Contratar", asesor: "Hablar con un asesor", soporte: "Soporte" };
+async function cargarProspectos() {
+  try {
+    const { prospectos } = await api("GET", { accion: "prospectos" });
+    $("#prospectosLista").innerHTML = prospectos.map((p) => `<tr><td>${esc(new Date(p.creado).toLocaleDateString("es-EC"))}</td><td>${esc(p.nombre)}</td><td>${esc([p.notaria, p.ciudad].filter(Boolean).join(", ") || "—")}</td><td>${esc([p.telefono, p.correo].filter(Boolean).join(" · ") || "—")}</td><td>${esc([p.plan, CONTACTO_TEXTO[p.motivo] || p.motivo].filter(Boolean).join(" · "))}</td></tr>`).join("") || '<tr><td colspan="5">Todavía no hay prospectos.</td></tr>';
+  } catch (e) { $("#prospectosLista").innerHTML = `<tr><td colspan="5">${esc(e.message)}</td></tr>`; }
+}

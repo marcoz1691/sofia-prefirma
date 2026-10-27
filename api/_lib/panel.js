@@ -22,7 +22,7 @@ const legible = (historial) => historial.map(textoVisible).filter(Boolean);
 const limpio = (v, max) => String(v ?? "").replace(/[\u0000-\u001f\u007f]+/g, " ").trim().slice(0, max);
 export const canalDe = canalDeTelefono;
 
-export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Date(), esperar = (ms) => new Promise((r) => setTimeout(r, ms)), plantillas = {} }) {
+export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Date(), esperar = (ms) => new Promise((r) => setTimeout(r, ms)), plantillas = {}, producto = "notaria" }) {
   async function dentroDeVentana(conversacionId) {
     const c = await almacen.conversacionPorId(conversacionId);
     if (c && canalDe(c.telefono) !== "whatsapp") return false;   // el chat web y el formulario no tienen canal para responder
@@ -71,7 +71,9 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
   }
   return {
     // «plan» lo fija el administrador de SOFIA PreFirma en los ajustes de cada notaría (por ejemplo, Vitrina).
-    async yo(email) { const p = (await almacen.equipo()).find(p => p.email === email); return { email, nombre: p?.nombre || "", rol: await almacen.rolDe(email), plan: String((await almacen.ajustes()).plan || "") }; },
+    async yo(email) { const p = (await almacen.equipo()).find(p => p.email === email); return { email, nombre: p?.nombre || "", rol: await almacen.rolDe(email), plan: String((await almacen.ajustes()).plan || ""), producto }; },
+    // Interesados de SOFIA PreFirma (solo se muestran en el panel del producto de ventas).
+    async prospectos() { return { prospectos: await almacen.prospectos() }; },
     async equipo(por) {
       const rol = await permitir(por, ["admin", "notario"]);
       return { miembros: await almacen.equipo(), yo: por, rol };
@@ -207,8 +209,9 @@ export function crearPanel({ almacen, whatsapp, contenido, ahora = () => new Dat
       const texto = textoValido(b);
       if (!texto) throw new Aviso("Revisa el texto: el nombre debe tener entre 3 y 120 caracteres, la descripción y la nota hasta 500, y cada requisito o paso hasta 300 (máximo 25 por lista).");
       await almacen.guardarAjuste("tramite." + b.tramiteId, JSON.stringify(texto), por);
+      contenido.invalidar?.();
     },
-    async restaurarTexto(id) { await tramitePrecio(id); await almacen.restaurarAjuste("tramite." + id); },
+    async restaurarTexto(id) { await tramitePrecio(id); await almacen.restaurarAjuste("tramite." + id); contenido.invalidar?.(); },
     async guardarPrecio(p, por) {
       const C = await tramitePrecio(p.tramiteId);
       if (!["pct", "fija", "cuantia", "consultar"].includes(p.tipo)) throw new Aviso("Tipo de precio inválido.");
