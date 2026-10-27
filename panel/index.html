@@ -11,7 +11,7 @@
 </head>
 <body>
 <header><img src="../assets/logo/logo-notaria41-blanco.svg" alt=""><b>Panel · Notaría 41</b>
-  <nav class="tabs" id="tabs" hidden><button data-tab="app" class="on">Conversaciones</button><button data-tab="agendaV">Agenda</button><button data-tab="filaV">Fila</button><button data-tab="preciosV">Trámites</button><button data-tab="funcionesV" hidden>Funciones</button><button data-tab="metricasV" hidden>Métricas</button><button data-tab="equipoV" hidden>Equipo</button></nav><span class="sp"></span><span id="perfilSesion" hidden></span><button id="salir" hidden>Salir</button></header>
+  <nav class="tabs" id="tabs" hidden><button data-tab="app" class="on">Conversaciones</button><button data-tab="agendaV">Agenda</button><button data-tab="filaV">Fila</button><button data-tab="preciosV">Trámites</button><button data-tab="prospectosV" hidden>Prospectos</button><button data-tab="funcionesV" hidden>Funciones</button><button data-tab="metricasV" hidden>Métricas</button><button data-tab="equipoV" hidden>Equipo</button></nav><span class="sp"></span><span id="perfilSesion" hidden></span><button id="salir" hidden>Salir</button></header>
 <aside class="mejorar" id="mejorar" hidden><p><b>Tu notaría está en Vitrina.</b> Tus clientes ya ven tus trámites y tarifas. Activa a Sofía para que también les responda por WhatsApp a cualquier hora, agende citas y reciba documentos. Tu primer mes con Sofía es gratis.</p><a href="https://sofiaprefirma.com/#planes" target="_blank" rel="noopener">Activar a Sofía</a></aside>
 
 <div class="cargando" id="cargando" role="status"><img src="../assets/logo/logo-notaria41-verde.svg" alt=""><span>Cargando el panel…</span></div>
@@ -116,6 +116,7 @@
 <div class="fila__llamar"><label for="filaVentanilla">Tu ventanilla</label><input id="filaVentanilla" maxlength="12" value="1"><button class="btn" id="filaLlamar" type="button">Llamar siguiente</button><span id="filaMensaje" role="status"></span></div>
 <div class="fila__tabla"><table><thead><tr><th>Turno</th><th>Nombre</th><th>Motivo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="filaLista"></tbody></table></div>
 </section>
+<section id="prospectosV" hidden><h2>Prospectos</h2><p class="fila__ayuda">Personas que pidieron una demostración, una cotización o un plan de SOFIA PreFirma.</p><div class="fila__tabla"><table><thead><tr><th>Fecha</th><th>Nombre</th><th>Notaría</th><th>Contacto</th><th>Plan / motivo</th></tr></thead><tbody id="prospectosLista"></tbody></table></div></section>
 <section id="agendaV" hidden>
   <div class="ag-top"><h2 id="agTitulo">Agenda</h2>
     <button class="btn btn--line" data-dia="-1" aria-label="Día anterior">‹</button>

@@ -95,6 +95,7 @@ export function crearManejadorPanel({ panel, auth, exigirMfa = true, limiteDesca
     conversaciones: { fn: () => panel.conversaciones() },
     buscarTicket: { fn: (q) => panel.buscarTicket(q.get("codigo")), auditar: true },
     agenda: { fn: (q) => panel.agenda(q.get("fecha")) },
+    prospectos: { fn: () => panel.prospectos() },
     fila: { fn: () => panel.fila() },
     detalle: { fn: (q) => panel.detalle(q.get("id")), auditar: true },
     documento: { auditar: true, estricta: true, fn: async (q, email) => {
