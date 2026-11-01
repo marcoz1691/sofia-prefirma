@@ -32,6 +32,6 @@ Confirma con el usuario cuáles ya ejecutó; no asumas.
 
 ## 3. Verificación de proyecto Vercel
 
-`npm run vercel:verificar:comercial` o `npm run vercel:verificar:piloto` según el sitio. El comercial es `sofiaprefirma`; el piloto es `notaria41`.
+`npm run vercel:verificar:comercial` o `npm run vercel:verificar:piloto` según el sitio. El comercial es el proyecto `sofiaprefirma`; el piloto es `sofiaprefirma-notaria41`. El proyecto `notaria41` es el sitio institucional de la notaría y no es el destino del piloto.
 
 Reporta qué pasos están hechos y cuáles faltan; no ejecutes SQL ni despliegues sin confirmación.
