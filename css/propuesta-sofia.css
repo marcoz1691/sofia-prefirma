@@ -180,3 +180,33 @@ footer .marca img{height:80px}
 
 .plan.plan--aparte{flex-direction:row;align-items:center;justify-content:space-between;gap:24px;max-width:none;margin:22px 0 0;padding:20px 26px;background:#F7FAFB}.plan--aparte header h3{font-size:1.05rem;margin:0 0 4px}.plan--aparte header>span{max-width:640px;min-height:0}.plan--aparte .boton{flex:none}@media(max-width:760px){.plan.plan--aparte{flex-direction:column;align-items:flex-start}}
 @media(min-width:961px){.planes__grid>.plan:nth-child(4){grid-column:2/span 2}}
+/* Impresión / «Guardar en PDF»: una idea por página y sin bloques partidos. */
+@media print{
+section:not(.hero){padding:7mm 3mm;break-inside:avoid}
+.recorrido,.planes,.incluido,.piloto{break-before:page}
+.integraciones{break-before:auto}
+.suite__grid article,.pasos li,.calidad__grid article,.plan,.extras article,.incluido__grid>div{break-inside:avoid}
+.problema{padding-bottom:4mm}
+.problema h2,.seccion-cab h2,.planes__cab h2,.piloto h2{font-size:22pt;line-height:1.05}
+.seccion-cab{margin-bottom:5mm}
+.suite__estrella{padding:7mm}.suite__icono{margin-bottom:8mm}.suite__estrella h3{font-size:26pt}
+.suite__grid article{padding:4.5mm}.suite__grid p{margin-top:3mm}
+.pasos li{padding:5mm}.pasos h3{margin-top:6mm}
+.calidad__grid article{min-height:0;padding:5mm}.calidad__grid h3{margin-top:5mm}
+.planes__cab{margin-bottom:5mm}.oferta{margin-bottom:5mm;padding:4mm 5mm}
+.planes__grid{display:flex!important;flex-wrap:wrap;justify-content:center;gap:3mm;break-inside:auto}
+.planes__grid>.plan{flex:0 0 calc((100% - 6.1mm)/3);max-width:none;margin:0;padding:3.5mm 4mm;grid-column:auto}
+.planes{padding-top:4mm!important;padding-bottom:0!important}.planes .plan li{padding:.5mm 0 .5mm 4mm}.plan__precio strong{font-size:21pt}
+.plan__badge{font-size:6.5pt}
+.plan h3{font-size:13pt}.plan header>span{font-size:7.5pt}
+.plan__precio{margin-top:3mm}.plan__precio strong{font-size:24pt}
+.plan ul{padding:3mm 0 1mm;margin:0 0 3mm}.plan li{font-size:7pt;padding:.8mm 0 .8mm 4mm}
+.plan .boton,.plan__subir,.plan__productos,.plan__factura{display:none}
+.planes__cab h2{font-size:18pt}.plan header>p{margin-bottom:1.5mm}.plan header>span{min-height:0}
+.calidad__grid article{padding:3mm 4mm}.calidad__grid h3{margin-top:2mm}.pasos li{padding:3.5mm 4mm}.pasos h3{margin-top:2mm}.calidad,.recorrido{padding-top:5mm!important;padding-bottom:4mm!important}.recorrido .seccion-cab{margin-bottom:3mm}
+.plan.plan--aparte{margin-top:4mm;padding:4mm 5mm}
+.precio-notas{margin-top:4mm;padding:4mm;font-size:7.5pt}
+.incluido__grid>div,.extras article{padding:4mm}.incluido__grid h3,.extras h3{margin-top:3mm}
+.integraciones{padding-top:5mm!important}
+#ventas-chat,.ventas-chat,[class*="chat-flot"],.habla-sofia{display:none!important}
+}
