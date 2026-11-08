@@ -12,13 +12,14 @@ it("el panel informa el plan de la notaría para invitar a activar a Sofía", as
   expect((await panel.yo("notario@ejemplo.ec")).plan).toBe("Vitrina");
 });
 
-it("Sofía presenta Vitrina sin costo mensual y nunca como «plan gratis»", () => {
-  expect(PLANES.at(-1)).toMatchObject({ nombre: "Vitrina", mensual: 0 });
+it("Sofía presenta Vitrina a USD 29 y la oferta de notarías fundadoras", () => {
+  expect(PLANES.at(-1)).toMatchObject({ nombre: "Vitrina", mensual: 29 });
   const s = sistemaVentas();
-  expect(s).toContain("Vitrina (Tu notaría, abierta en línea): sin mensualidad, para siempre.");
+  expect(s).toContain("Vitrina (Tu notaría, abierta en línea): USD 29 al mes");
+  expect(s).toContain("las primeras 5 notarías que contraten no pagan la configuración inicial");
+  expect(s).toContain("nunca «activación»");
   expect(s).toContain("Turnos en la notaría: QR en la entrada");
-  expect(s).toContain("Nunca la llames «plan gratis»");
-  expect(s).not.toContain("USD 0 al mes");
+    expect(s).not.toContain("USD 0 al mes");
 });
 
 it("la solicitud de Vitrina se registra sin mes de prueba", async () => {
@@ -27,7 +28,7 @@ it("la solicitud de Vitrina se registra sin mes de prueba", async () => {
   const r = await m.POST(new Request("https://sofiaprefirma.com/api/ventas", { method: "POST", headers: { "Content-Type": "application/json", "x-forwarded-for": "190.1.1.1" },
     body: JSON.stringify({ accion: "solicitar", nombre: "Pedro Mora", notaria: "Notaría 3 de Loja", telefono: "0987654321", plan: "Vitrina", periodo: "anual", aceptaTerminos: true, aceptaDatos: true }) }));
   expect(r.status).toBe(200);
-  expect((await almacen.prospectos())[0]).toMatchObject({ plan: "Vitrina", detalle: "Vitrina sin costo mensual" });
+  expect((await almacen.prospectos())[0]).toMatchObject({ plan: "Vitrina", detalle: "Vitrina · pago anual" });
 });
 
 it("el plan Entrada se registra sin mes de prueba y Sofía lo sabe", async () => {

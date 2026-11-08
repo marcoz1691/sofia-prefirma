@@ -11,6 +11,9 @@ test("la propuesta presenta la suite Sofía y sus planes", async ({ page }) => {
   await expect(page.locator(".plan--recomendado .plan__badge")).toHaveText("Recomendado");
   await expect(page.locator(".oferta")).toContainText("con el plan PreFirma o superior");
   await expect(page.locator(".planes__grid .plan--vitrina")).toHaveCount(0);
+  await expect(page.locator(".oferta")).toContainText("Notarías fundadoras");
+  await expect(page.locator(".precio-notas")).toContainText("Configuración inicial: es un pago único");
+  await expect(page.getByText(/activación/i)).toHaveCount(0);
   await expect(page.locator(".plan--recomendado")).toContainText("PreFirma");
   await expect(page.getByRole("button", { name: /Guardar en PDF/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "De la demostración a una primera etapa controlada." })).toBeVisible();
@@ -106,7 +109,10 @@ test("el plan Entrada no ofrece mes gratis", async ({ page }) => {
 test("Vitrina queda como opción discreta debajo de los planes", async ({ page }) => {
   await page.goto("/propuesta-sofia.html");
   await page.getByRole("link", { name: "Conocer Vitrina" }).click();
-  await expect(page.getByRole("dialog", { name: "Vitrina" }).getByRole("button", { name: "Abrir mi Vitrina" })).toBeVisible();
+  const dialogo = page.getByRole("dialog", { name: "Vitrina" });
+  await expect(dialogo.getByRole("button", { name: "Abrir mi Vitrina" })).toBeVisible();
+  await expect(dialogo.locator("#eleccion-precio")).toHaveText("29");
+  await expect(dialogo.locator("#eleccion-oferta")).toBeHidden();
 });
 
 test("la propuesta tiene una versión limpia para imprimir en PDF", async ({ page }) => {

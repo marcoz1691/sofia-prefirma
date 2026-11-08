@@ -7,11 +7,10 @@ function mostrarPeriodo(periodo) {
     const mensual = Number(plan.dataset.mensual);
     const precio = plan.querySelector(".plan__precio strong");
     const factura = plan.querySelector(".plan__factura");
-    if (mensual === 0) {
-      if (factura) factura.textContent = "Para siempre · sin tarjeta";
-    } else if (periodo === "anual") {
+    if (!precio || !factura) return;
+    if (periodo === "anual") {
       precio.textContent = Math.round(mensual * 10 / 12);
-      factura.textContent = `Equivale a USD ${mensual * 10} al año · activación incluida`;
+      factura.textContent = `Equivale a USD ${mensual * 10} al año · configuración inicial incluida`;
     } else {
       precio.textContent = mensual;
       factura.textContent = "Facturación mensual";
@@ -83,31 +82,29 @@ const PASOS_PRUEBA = ["Nos dejas tus datos.", "En un día hábil te llamamos y v
 // El mes gratis aplica desde PreFirma (USD 119). Debe coincidir con MES_GRATIS_DESDE en api/_lib/catalogo-ventas.js.
 const MES_GRATIS_DESDE = 119;
 const PASOS_SIN_PRUEBA = ["Nos dejas tus datos.", "En un día hábil te llamamos y vemos una demostración con tus trámites.", "Configuramos tu marca, trámites y a Sofía en tu web.", "Empiezas con tu plan. El mes gratis aplica desde PreFirma."];
-const PASOS_VITRINA = ["Nos dejas tus datos.", "Cargamos tu catálogo de trámites y tarifas.", "Publicamos tu web con tu marca.", "Cuando quieras, activas a Sofía y empiezas tu mes de prueba."];
+const PASOS_VITRINA = ["Nos dejas tus datos.", "Cargamos tu catálogo de trámites y tarifas.", "Publicamos tu web con tu marca.", "Cuando quieras, sumas a Sofía con el plan PreFirma y la pruebas un mes gratis."];
 
 function textoEnviar() {
   const mensual = Number(planElegido.dataset.mensual);
-  return mensual === 0 ? "Abrir mi Vitrina" : mensual >= MES_GRATIS_DESDE ? "Empezar mi mes gratis" : `Solicitar plan ${planElegido.dataset.plan}`;
+  return planElegido.dataset.plan === "Vitrina" ? "Abrir mi Vitrina" : mensual >= MES_GRATIS_DESDE ? "Empezar mi mes gratis" : `Solicitar plan ${planElegido.dataset.plan}`;
 }
 
 function pintarEleccion() {
   const mensual = Number(planElegido.dataset.mensual);
-  const vitrina = mensual === 0, prueba = mensual >= MES_GRATIS_DESDE;
-  const anual = periodoElegido === "anual" && !vitrina;
+  const vitrina = planElegido.dataset.plan === "Vitrina", prueba = mensual >= MES_GRATIS_DESDE;
+  const anual = periodoElegido === "anual";
   document.querySelector("#eleccion-oferta").hidden = !prueba;
-  document.querySelector("#eleccion-periodo").hidden = vitrina;
-  document.querySelector("#eleccion-moneda").hidden = vitrina;
-  document.querySelector(".eleccion__precio").classList.toggle("eleccion__precio--texto", vitrina);
-  document.querySelector("#eleccion-sufijo").textContent = vitrina ? "" : prueba ? "/ mes después de la prueba" : "/ mes";
+  document.querySelector("#eleccion-sufijo").textContent = prueba ? "/ mes después de la prueba" : "/ mes";
   document.querySelector("#eleccion-form-titulo").textContent = vitrina ? "Abre tu Vitrina" : prueba ? "Empieza tu mes gratis" : "Solicita tu demostración";
   document.querySelector("#eleccion-pasos").innerHTML = (vitrina ? PASOS_VITRINA : prueba ? PASOS_PRUEBA : PASOS_SIN_PRUEBA).map(p => `<li>${p}</li>`).join("");
   document.querySelector("#eleccion-enviar").textContent = textoEnviar();
   document.querySelector("#eleccion-titulo").textContent = planElegido.dataset.plan;
   document.querySelector("#eleccion-lema").textContent = planElegido.querySelector("header h3").textContent;
-  document.querySelector("#eleccion-precio").textContent = vitrina ? "Sin mensualidad" : anual ? Math.round(mensual * 10 / 12) : mensual;
-  document.querySelector("#eleccion-factura").textContent = vitrina ? "Para siempre · sin tarjeta" : anual
-    ? `USD ${mensual * 10} al año · activación incluida`
-    : "Facturación mensual · la activación se cotiza una sola vez";
+  document.querySelector("#eleccion-precio").textContent = anual ? Math.round(mensual * 10 / 12) : mensual;
+  document.querySelector("#eleccion-factura").textContent = anual
+    ? `USD ${mensual * 10} al año · configuración inicial incluida`
+    : vitrina ? "Facturación mensual · sin configuración inicial"
+    : "Facturación mensual · configuración inicial: pago único (sin costo para notarías fundadoras)";
   document.querySelector("#eleccion-incluye").innerHTML = planElegido.querySelector("ul").innerHTML;
   eleccion.querySelectorAll("[data-e-periodo]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.ePeriodo === periodoElegido)));
 }
@@ -158,7 +155,7 @@ formEleccion?.addEventListener("submit", async (evento) => {
     formEleccion.hidden = true;
     const listo = document.querySelector("#eleccion-listo");
     document.querySelector("#eleccion-listo-titulo").textContent = `Listo, ${datos.nombre.trim().split(" ")[0]}.`;
-    document.querySelector("#eleccion-listo-texto").textContent = `Recibimos tu solicitud del plan ${planElegido.dataset.plan}. En un día hábil te escribiremos al ${datos.telefono.trim()} para ${Number(planElegido.dataset.mensual) === 0 ? "cargar tu catálogo y publicar tu Vitrina" : Number(planElegido.dataset.mensual) >= MES_GRATIS_DESDE ? "coordinar la demostración y activar tu mes gratis" : "coordinar la demostración y activar tu plan"}.`;
+    document.querySelector("#eleccion-listo-texto").textContent = `Recibimos tu solicitud del plan ${planElegido.dataset.plan}. En un día hábil te escribiremos al ${datos.telefono.trim()} para ${planElegido.dataset.plan === "Vitrina" ? "cargar tu catálogo y publicar tu Vitrina" : Number(planElegido.dataset.mensual) >= MES_GRATIS_DESDE ? "coordinar la demostración y activar tu mes gratis" : "coordinar la demostración y activar tu plan"}.`;
     listo.hidden = false; listo.focus();
     formEleccion.reset();
   } catch (error) {

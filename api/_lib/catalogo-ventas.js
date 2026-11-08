@@ -21,7 +21,7 @@ export const PLANES = [
   { nombre: "Integral Plus", mensual: 229, lema: "Escala con prioridad", para: "operaciones de mayor volumen que necesitan más capacidad",
     modulos: ["suite completa", "integraciones"],
     incluye: ["Todo el plan Integral", "Hasta 2.500 conversaciones y 500 páginas al mes", "30 usuarios del panel", "Calendario y PDF con marca incluidos", "Soporte prioritario", "Una integración personalizada por cotizar"] },
-  { nombre: "Vitrina", mensual: 0, lema: "Tu notaría, abierta en línea", para: "que los clientes encuentren requisitos y tarifas sin llamar",
+  { nombre: "Vitrina", mensual: 29, lema: "Tu notaría, abierta en línea", para: "que los clientes encuentren requisitos y tarifas sin llamar",
     modulos: ["web", "catálogo", "calculadora"],
     incluye: ["Página web con la marca de la notaría", "Catálogo de trámites con requisitos y pasos", "Calculadora de tarifas oficiales", "1 usuario del panel", "No incluye a Sofía: no responde chats ni WhatsApp, no agenda, no recibe documentos ni maneja la fila"] }
 ];
@@ -69,8 +69,10 @@ Reglas:
 
 Planes (precios de lanzamiento para las notarías que contraten hasta el 31 de enero de 2027):
 ${planes}
-- Con pago anual se pagan 10 meses y se reciben 12 (2 meses gratis), y la activación está incluida. Con pago mensual, la activación se cotiza una sola vez según el plan y la configuración.
-- Vitrina no es la oferta principal: no la menciones por iniciativa propia. Ofrécela solo si la notaría dice que todavía no está lista para pagar o pregunta por algo más simple. Nunca la llames «plan gratis» ni «gratuito»: di «sin mensualidad» o «sin costo mensual». Ofrécela a quien todavía no está listo para pagar o quiere empezar de a poco, y explica qué ganaría al activar a Sofía (atención por WhatsApp 24/7, citas, documentos) desde el plan Entrada.
+- Con pago anual se pagan 10 meses y se reciben 12 (2 meses gratis), y la configuración inicial está incluida. Con pago mensual, la configuración inicial se cotiza una sola vez según el plan.
+- Configuración inicial: es un pago único, aparte de la mensualidad, para dejar lista la notaría (marca, trámites y tarifas, conexión del WhatsApp de la notaría y capacitación del equipo). Di siempre «configuración inicial», nunca «activación». Vitrina no tiene configuración inicial.
+- Notarías fundadoras: las primeras 5 notarías que contraten no pagan la configuración inicial, prueban un mes gratis con PreFirma o superior y mantienen el precio de lanzamiento mientras sigan como clientes. A cambio dan su testimonio y permiten compartir sus resultados. No confirmes cuántos cupos quedan: si preguntan, ofrece registrar la consulta para que un asesor lo confirme.
+- Vitrina (USD 29 al mes, sin configuración inicial) no es la oferta principal: no la menciones por iniciativa propia. Ofrécela solo si la notaría dice que todavía no está lista para pagar un plan con Sofía o pregunta por algo más simple, y explica qué ganaría al sumar a Sofía (atención por WhatsApp 24/7, citas, documentos).
 - Prueba gratis: el primer mes es gratis con el plan PreFirma o superior (desde USD ${MES_GRATIS_DESDE}). El plan Entrada no incluye mes de prueba. Se configura la notaría y la usa 30 días sin pagar; si decide no continuar, no se le cobra nada. Menciónalo cuando hablen de precios o de empezar.
 - El precio de lanzamiento se garantiza durante 12 meses. Los precios incluyen alojamiento, mantenimiento y los límites indicados. El uso adicional se ofrece por bloques. Los mensajes de plantilla de WhatsApp se facturan al costo del proveedor.
 

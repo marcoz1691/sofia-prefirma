@@ -107,7 +107,7 @@ export function crearManejadorVentas({ agente, almacen, avisar = async () => {},
     const t = ahora(), huella = huellaIp(request);
     const [nIp, nDia] = await Promise.all([almacen.contarUso("ventas:solicitud:ip:" + huella, HORA, t), almacen.contarUso("ventas:solicitud:dia", DIA, t)]);
     if (nIp > 5 || nDia > 200) return json({ error: "Recibimos muchas solicitudes desde esta conexión. Inténtalo más tarde o escríbele a Sofía." }, 429);
-    const detalle = plan.mensual === 0 ? "Vitrina sin costo mensual"
+    const detalle = plan.nombre === "Vitrina" ? `Vitrina · pago ${periodo}`
       : plan.mensual >= MES_GRATIS_DESDE ? `Mes de prueba gratis · pago ${periodo}` : `Sin mes de prueba · pago ${periodo}`;
     await almacen.guardarProspecto({ conversacionId: null, ...p, plan: plan.nombre, motivo: "contratar", detalle });
     await registrarConsentimiento(almacen, { canal: "formulario-ventas", titular: "form:" + p.telefono.replace(/\D/g, ""), texto: TEXTO_FORMULARIO, t: new Date(t),
