@@ -9,6 +9,8 @@ test("la propuesta presenta la suite Sofía y sus planes", async ({ page }) => {
   await expect(page.locator(".suite h3")).toHaveText(["Antesala", "Alista", "Clara", "Pronta", "Nexo", "Lúcida"]);
   await expect(page.locator(".plan__precio strong")).toHaveText(["59", "119", "149", "179", "229"]);
   await expect(page.locator(".plan--recomendado .plan__badge")).toHaveText("Recomendado");
+  await expect(page.locator(".comparar thead th[scope=col]").filter({ hasNotText: "Función" })).toHaveText(["Entrada", "PreFirma", "Equipo", "Integral", "Integral Plus"]);
+  await expect(page.getByRole("row", { name: /Usuarios del panel/ })).toContainText("3581530");
   await expect(page.locator(".oferta")).toContainText("con el plan PreFirma o superior");
   await expect(page.locator(".planes__grid .plan--vitrina")).toHaveCount(0);
   await expect(page.locator(".oferta")).toContainText("Notarías fundadoras");
