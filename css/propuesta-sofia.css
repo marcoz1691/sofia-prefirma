@@ -178,8 +178,8 @@ footer .marca img{height:80px}
 @media(prefers-reduced-motion:reduce){.pasos--animado li.activo i{transform:none}}
 @media print{.encender .palabra,.pasos--animado li{opacity:1!important}.pasos::before{display:none}}
 
-.plan.plan--aparte{flex-direction:row;align-items:center;justify-content:space-between;gap:24px;max-width:none;margin:22px 0 0;padding:20px 26px;background:#F7FAFB}.plan--aparte header h3{font-size:1.05rem;margin:0 0 4px}.plan--aparte header>span{max-width:640px;min-height:0}.plan--aparte .boton{flex:none}@media(max-width:760px){.plan.plan--aparte{flex-direction:column;align-items:flex-start}}
-@media(min-width:961px){.planes__grid>.plan:nth-child(4){grid-column:2/span 2}}
+.plan.plan--aparte{flex-direction:row;align-items:center;justify-content:space-between;gap:24px;margin-top:18px;padding:20px 26px;background:#F7FAFB}.plan--aparte header h3{font-size:1.05rem;margin:0 0 4px}.plan--aparte header>span{max-width:640px;min-height:0}.plan--aparte .boton{flex:none}@media(max-width:760px){.plan.plan--aparte{flex-direction:column;align-items:flex-start}}
+@media(min-width:961px){.planes__grid>.plan:nth-child(4){grid-column:1/span 3}.planes__grid>.plan:nth-child(5){grid-column:4/span 3}.planes__grid>.plan:nth-child(n+4) ul{columns:2;column-gap:28px}.planes__grid>.plan:nth-child(n+4) li{break-inside:avoid}}
 /* Impresión / «Guardar en PDF»: una idea por página y sin bloques partidos. */
 @media print{
 section:not(.hero){padding:7mm 3mm;break-inside:avoid}
