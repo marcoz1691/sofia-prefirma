@@ -177,3 +177,6 @@ footer .marca img{height:80px}
 .pasos--animado li.activo i{color:#fff;transform:scale(1.12)}
 @media(prefers-reduced-motion:reduce){.pasos--animado li.activo i{transform:none}}
 @media print{.encender .palabra,.pasos--animado li{opacity:1!important}.pasos::before{display:none}}
+
+.plan.plan--aparte{flex-direction:row;align-items:center;justify-content:space-between;gap:24px;max-width:none;margin:22px 0 0;padding:20px 26px;background:#F7FAFB}.plan--aparte header h3{font-size:1.05rem;margin:0 0 4px}.plan--aparte header>span{max-width:640px;min-height:0}.plan--aparte .boton{flex:none}@media(max-width:760px){.plan.plan--aparte{flex-direction:column;align-items:flex-start}}
+@media(min-width:961px){.planes__grid>.plan:nth-child(4){grid-column:2/span 2}}

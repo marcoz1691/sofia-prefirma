@@ -7,7 +7,10 @@ test("la propuesta presenta la suite Sofía y sus planes", async ({ page }) => {
   await expect(page.getByText("Notaría 41")).toHaveCount(0);
   await expect(page.getByText("miNotarIA")).toHaveCount(0);
   await expect(page.locator(".suite h3")).toHaveText(["Antesala", "Alista", "Clara", "Pronta", "Nexo", "Lúcida"]);
-  await expect(page.locator(".plan__precio strong")).toHaveText(["Sin mensualidad", "59", "119", "149", "179", "229"]);
+  await expect(page.locator(".plan__precio strong")).toHaveText(["59", "119", "149", "179", "229"]);
+  await expect(page.locator(".plan--recomendado .plan__badge")).toHaveText("Recomendado");
+  await expect(page.locator(".oferta")).toContainText("con el plan PreFirma o superior");
+  await expect(page.locator(".planes__grid .plan--vitrina")).toHaveCount(0);
   await expect(page.locator(".plan--recomendado")).toContainText("PreFirma");
   await expect(page.getByRole("button", { name: /Guardar en PDF/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "De la demostración a una primera etapa controlada." })).toBeVisible();
@@ -52,8 +55,8 @@ test("el contenido no depende del desplazamiento ni de la animación para ser vi
 test("el pago anual muestra dos meses gratis", async ({ page }) => {
   await page.goto("/propuesta-sofia.html");
   await page.getByRole("button", { name: /Anual/ }).click();
-  await expect(page.locator(".plan__precio strong")).toHaveText(["Sin mensualidad", "49", "99", "124", "149", "191"]);
-  await expect(page.locator(".plan__factura").nth(2)).toContainText("USD 1190 al año");
+  await expect(page.locator(".plan__precio strong")).toHaveText(["49", "99", "124", "149", "191"]);
+  await expect(page.locator(".plan__factura").nth(1)).toContainText("USD 1190 al año");
   await expect(page.getByRole("button", { name: /Anual/ })).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -89,6 +92,21 @@ test("elegir un plan abre la ventana del mes gratis y envía la solicitud", asyn
   expect(cuerpo).toMatchObject({ accion: "solicitar", plan: "Equipo", periodo: "anual", nombre: "Lucía Andrade", telefono: "099 123 4567", aceptaTerminos: true, aceptaDatos: true });
   await page.keyboard.press("Escape");
   await expect(dialogo).toBeHidden();
+});
+
+test("el plan Entrada no ofrece mes gratis", async ({ page }) => {
+  await page.goto("/propuesta-sofia.html");
+  await page.getByRole("link", { name: "Elegir Entrada" }).click();
+  const dialogo = page.getByRole("dialog", { name: "Entrada" });
+  await expect(dialogo).toBeVisible();
+  await expect(dialogo.locator("#eleccion-oferta")).toBeHidden();
+  await expect(dialogo.getByRole("button", { name: "Solicitar plan Entrada" })).toBeVisible();
+});
+
+test("Vitrina queda como opción discreta debajo de los planes", async ({ page }) => {
+  await page.goto("/propuesta-sofia.html");
+  await page.getByRole("link", { name: "Conocer Vitrina" }).click();
+  await expect(page.getByRole("dialog", { name: "Vitrina" }).getByRole("button", { name: "Abrir mi Vitrina" })).toBeVisible();
 });
 
 test("la propuesta tiene una versión limpia para imprimir en PDF", async ({ page }) => {

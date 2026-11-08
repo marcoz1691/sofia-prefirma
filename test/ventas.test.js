@@ -31,7 +31,7 @@ describe("agente de ventas", () => {
     expect(params.model).toBe("claude-sonnet-5-5");
     expect(params.fallbacks).toBe("default");
     expect(params.tools.map((t) => t.name)).toEqual(["registrar_interes"]);
-    expect(params.system[0].text).toContain("PreFirma (Prepara expedientes, el más elegido): USD 119 al mes");
+    expect(params.system[0].text).toContain("PreFirma (Prepara expedientes, el recomendado): USD 119 al mes");
     const conv = await almacen.conversacionPorTelefono("web:" + SESION);
     expect((await almacen.historial(conv.id)).length).toBe(2);
   });

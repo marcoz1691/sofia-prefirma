@@ -2,14 +2,14 @@
 // si cambia un precio o un plan en la página, cámbialo aquí (test/catalogo-ventas.test.js compara ambos).
 export const TENANT_VENTAS = "sofia-ventas";
 
+// El primer mes gratis aplica desde este precio mensual (PreFirma). Debe coincidir con js/propuesta-sofia.js.
+export const MES_GRATIS_DESDE = 119;
+
 export const PLANES = [
-  { nombre: "Vitrina", mensual: 0, lema: "Tu notaría, abierta en línea", para: "que los clientes encuentren requisitos y tarifas sin llamar",
-    modulos: ["web", "catálogo", "calculadora"],
-    incluye: ["Página web con la marca de la notaría", "Catálogo de trámites con requisitos y pasos", "Calculadora de tarifas oficiales", "1 usuario del panel", "No incluye a Sofía: no responde chats ni WhatsApp, no agenda, no recibe documentos ni maneja la fila"] },
   { nombre: "Entrada", mensual: 59, lema: "Atiende y agenda", para: "ordenar la puerta digital de la notaría",
     modulos: ["Antesala", "Pronta"],
     incluye: ["Web personalizada y catálogo de trámites", "Calculadora de tarifas oficiales", "Sofía en la web", "Requisitos, tarifas y citas", "Hasta 250 conversaciones al mes", "3 usuarios del panel"] },
-  { nombre: "PreFirma", mensual: 119, lema: "Prepara expedientes", para: "hacer avanzar cada caso antes de la firma", masElegido: true,
+  { nombre: "PreFirma", mensual: 119, lema: "Prepara expedientes", para: "hacer avanzar cada caso antes de la firma", recomendado: true,
     modulos: ["Antesala", "Pronta", "Alista", "Clara"],
     incluye: ["Todo el plan Entrada", "Sofía en WhatsApp, 24/7", "Checklist personalizado por caso", "Recepción y clasificación documental", "Turnos en la notaría: QR en la entrada, pantalla para la sala y aviso por WhatsApp cuando llaman al cliente", "Hasta 600 conversaciones y 75 páginas al mes", "5 usuarios del panel"] },
   { nombre: "Equipo", mensual: 149, lema: "Coordina responsables", para: "notarías donde varias personas atienden y revisan",
@@ -21,6 +21,9 @@ export const PLANES = [
   { nombre: "Integral Plus", mensual: 229, lema: "Escala con prioridad", para: "operaciones de mayor volumen que necesitan más capacidad",
     modulos: ["suite completa", "integraciones"],
     incluye: ["Todo el plan Integral", "Hasta 2.500 conversaciones y 500 páginas al mes", "30 usuarios del panel", "Calendario y PDF con marca incluidos", "Soporte prioritario", "Una integración personalizada por cotizar"] },
+  { nombre: "Vitrina", mensual: 0, lema: "Tu notaría, abierta en línea", para: "que los clientes encuentren requisitos y tarifas sin llamar",
+    modulos: ["web", "catálogo", "calculadora"],
+    incluye: ["Página web con la marca de la notaría", "Catálogo de trámites con requisitos y pasos", "Calculadora de tarifas oficiales", "1 usuario del panel", "No incluye a Sofía: no responde chats ni WhatsApp, no agenda, no recibe documentos ni maneja la fila"] }
 ];
 
 export const MODULOS = [
@@ -43,7 +46,7 @@ const anual = (m) => Math.round(m * 10 / 12);
 export function sistemaVentas({ whatsapp = "" } = {}) {
   const planes = PLANES.map((p) => p.mensual === 0
     ? `- ${p.nombre} (${p.lema}): sin mensualidad, para siempre. Para ${p.para}. Incluye: ${p.incluye.join("; ")}.`
-    :     `- ${p.nombre} (${p.lema}${p.masElegido ? ", el más elegido" : ""}): USD ${p.mensual} al mes, o USD ${anual(p.mensual)} al mes con pago anual (USD ${p.mensual * 10} al año). Para ${p.para}. Módulos: ${p.modulos.join(", ")}. Incluye: ${p.incluye.join("; ")}.`).join("\n");
+    :     `- ${p.nombre} (${p.lema}${p.recomendado ? ", el recomendado" : ""}): USD ${p.mensual} al mes, o USD ${anual(p.mensual)} al mes con pago anual (USD ${p.mensual * 10} al año). Para ${p.para}. Módulos: ${p.modulos.join(", ")}. Incluye: ${p.incluye.join("; ")}.`).join("\n");
   const modulos = MODULOS.map(([n, v, d]) => `- ${n} (${v}): ${d}`).join("\n");
   const ampliaciones = AMPLIACIONES.map(([n, precio, d]) => `- ${n}, ${precio}: ${d}.`).join("\n");
   const contacto = whatsapp
@@ -67,8 +70,8 @@ Reglas:
 Planes (precios de lanzamiento para las notarías que contraten hasta el 31 de enero de 2027):
 ${planes}
 - Con pago anual se pagan 10 meses y se reciben 12 (2 meses gratis), y la activación está incluida. Con pago mensual, la activación se cotiza una sola vez según el plan y la configuración.
-- Vitrina es la puerta de entrada. Nunca la llames «plan gratis» ni «gratuito»: di «sin mensualidad» o «sin costo mensual». Ofrécela a quien todavía no está listo para pagar o quiere empezar de a poco, y explica qué ganaría al activar a Sofía (atención por WhatsApp 24/7, citas, documentos) desde el plan Entrada.
-- Prueba gratis: el primer mes es gratis en cualquier plan de pago. Se configura la notaría y la usa 30 días sin pagar; si decide no continuar, no se le cobra nada. Menciónalo cuando hablen de precios o de empezar.
+- Vitrina no es la oferta principal: no la menciones por iniciativa propia. Ofrécela solo si la notaría dice que todavía no está lista para pagar o pregunta por algo más simple. Nunca la llames «plan gratis» ni «gratuito»: di «sin mensualidad» o «sin costo mensual». Ofrécela a quien todavía no está listo para pagar o quiere empezar de a poco, y explica qué ganaría al activar a Sofía (atención por WhatsApp 24/7, citas, documentos) desde el plan Entrada.
+- Prueba gratis: el primer mes es gratis con el plan PreFirma o superior (desde USD ${MES_GRATIS_DESDE}). El plan Entrada no incluye mes de prueba. Se configura la notaría y la usa 30 días sin pagar; si decide no continuar, no se le cobra nada. Menciónalo cuando hablen de precios o de empezar.
 - El precio de lanzamiento se garantiza durante 12 meses. Los precios incluyen alojamiento, mantenimiento y los límites indicados. El uso adicional se ofrece por bloques. Los mensajes de plantilla de WhatsApp se facturan al costo del proveedor.
 
 Los seis módulos (comparten la conversación, el expediente y el seguimiento; cada plan activa los que necesita):
