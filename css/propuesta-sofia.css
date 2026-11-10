@@ -25,7 +25,7 @@ footer .marca img{height:80px}
 .hero::after{background:radial-gradient(circle at 76% 36%,rgba(15,139,163,.26),transparent 32%),radial-gradient(circle at 12% 92%,rgba(15,139,163,.1),transparent 36%)}
 .hero__fondo span{border-color:rgba(95,212,228,.12)}
 .hero .sobretitulo,.piloto .etiqueta{color:var(--menta)}
-.hero__acento{color:var(--menta)}
+.hero__acento{color:var(--menta)}.hero__rota{display:grid}.hero__rota>span{grid-area:1/1;transition:opacity .45s ease-out,transform .45s ease-out}.hero__rota>span:not(.activa){opacity:0;transform:translateY(.12em)}
 .burbuja--cliente{background:linear-gradient(135deg,#0B7A90,#0A6A7E)}
 .telefono{box-shadow:0 35px 90px rgba(2,12,22,.55),inset 0 0 0 1px rgba(95,212,228,.08)}
 .telefono__pie i{color:var(--menta)}
@@ -246,3 +246,7 @@ section:not(.hero){padding:7mm 3mm;break-inside:avoid}
 .detalle-planes{background:var(--papel)}.detalle__cab{display:flex;align-items:center;justify-content:space-between;gap:20px;max-width:var(--max);margin:0 auto;padding:22px 28px}.detalle__cab .marca-clara img{display:block;width:150px;height:auto}.detalle__volver{font-size:15px;font-weight:650;color:var(--verde)}
 .detalle{max-width:var(--max);margin:0 auto;padding:30px 28px 70px}.detalle h1{font-size:clamp(34px,5vw,52px);line-height:1.05;letter-spacing:-.03em;margin:0 0 16px;color:var(--tinta)}.detalle__bajada{font-size:18px;color:var(--muted);max-width:720px;margin:0 0 10px}.detalle .comparar{margin-top:30px}.detalle__notas{margin-top:26px;font-size:15px;color:var(--muted);max-width:820px}.detalle__notas p{margin:0 0 12px}.detalle__accion{margin:34px 0 0}
 @media(max-width:620px){.detalle{padding:24px 16px 60px}.detalle__cab{padding:18px 16px}.detalle__volver{font-size:14px}}
+
+/* Frases del título: con «Reducir movimiento» solo se desvanecen; al imprimir queda la principal */
+@media(prefers-reduced-motion:reduce){.hero__rota>span:not(.activa){transform:none}}
+@media print{.hero__rota>span{opacity:0!important}.hero__rota>span:first-child{opacity:1!important;transform:none}}

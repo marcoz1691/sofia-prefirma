@@ -70,7 +70,20 @@ compartir.addEventListener("click", async () => {
   }
 });
 
-document.querySelector("#imprimir").addEventListener("click", () => window.print());
+document.querySelector("#imprimir")?.addEventListener("click", () => window.print());
+
+// Las frases del título pasan una sola vez y terminan en la principal, que es la que leen los lectores de pantalla.
+const frases = [...document.querySelectorAll(".hero__rota > span")];
+if (frases.length > 1) {
+  let actual = 0;
+  const paso = () => {
+    frases[actual].classList.remove("activa");
+    actual = (actual + 1) % frases.length;
+    frases[actual].classList.add("activa");
+    if (actual !== 0) setTimeout(paso, 2200);
+  };
+  setTimeout(paso, 2600);
+}
 
 // «Elegir plan» abre una ventana con el resumen del plan y el formulario del mes gratis.
 const eleccion = document.querySelector("#eleccion");
