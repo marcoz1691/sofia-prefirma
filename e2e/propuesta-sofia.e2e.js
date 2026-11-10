@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("la propuesta presenta la suite Sofía y sus planes", async ({ page }) => {
   await page.goto("/propuesta-sofia.html");
   await expect(page).toHaveTitle(/Sofía PreFirma/);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("trámite listo para avanzar");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Tu notaría atiende las 24 horas. Sin contratar a nadie más.");
   await expect(page.getByText("Notaría 41")).toHaveCount(0);
   await expect(page.getByText("miNotarIA")).toHaveCount(0);
   await expect(page.locator(".suite h3")).toHaveText(["Antesala", "Alista", "Clara", "Pronta", "Nexo", "Lúcida"]);
@@ -130,4 +130,17 @@ test("el detalle de planes compara todas las funciones y vuelve a la propuesta",
   await expect(page.locator(".comparar thead th[scope=col]").filter({ hasNotText: "Función" })).toHaveText(["Entrada", "PreFirma", "Equipo", "Integral", "Integral Plus"]);
   await expect(page.getByRole("row", { name: /Usuarios del panel/ })).toContainText("3581530");
   await expect(page.locator(".detalle__volver")).toHaveAttribute("href", "propuesta-sofia.html#planes");
+});
+
+test("las frases del título pasan una vez y terminan en la principal", async ({ page }) => {
+  await page.clock.install();
+  await page.goto("/propuesta-sofia.html");
+  const activa = page.locator(".hero__rota > .activa");
+  await expect(activa).toHaveText("Sin contratar a nadie más.");
+  await page.clock.runFor(2700);
+  await expect(activa).toHaveText("Incluso mientras duermes.");
+  await page.clock.runFor(2200 * 3);
+  await expect(activa).toHaveText("Sin contratar a nadie más.");
+  await page.clock.runFor(10000);
+  await expect(activa).toHaveText("Sin contratar a nadie más.");
 });
