@@ -62,3 +62,26 @@ it("portal y pagos en línea se encienden solo con \"1\"; las demás se apagan s
   expect(leerFunciones({ "funcion.portal": "1", "funcion.pagosEnLinea": "x" })).toMatchObject({ portal: true, pagosEnLinea: false, agenda: true });
   expect(leerFunciones({ "funcion.portal": "0", "funcion.agenda": "x" })).toMatchObject({ portal: false, agenda: true });
 });
+
+it("solo el dominio público del sitio comercial se puede indexar", async () => {
+  const { default: middleware, robotsComercial } = await import("../middleware.js");
+  const publico = await middleware(new Request("https://sofiaprefirma.com/robots.txt"));
+  const texto = await publico.text();
+  expect(texto).toContain("Allow: /propuesta");
+  expect(texto).toContain("Sitemap: https://sofiaprefirma.com/sitemap.xml");
+  expect(texto).toContain("Disallow: /");
+  expect(robotsComercial("https://sofiaprefirma-marcspro.vercel.app/robots.txt")).toBe("User-agent: *\nDisallow: /\n");
+  const mapa = await middleware(new Request("https://www.sofiaprefirma.com/sitemap.xml"));
+  expect(await mapa.text()).toContain("<loc>https://sofiaprefirma.com/propuesta</loc>");
+  expect((await middleware(new Request("https://sofiaprefirma-marcspro.vercel.app/sitemap.xml"))).status).toBe(404);
+});
+
+it("el resto de dominios sigue con noindex y el piloto de la notaría no cambia", async () => {
+  const fs = await import("node:fs");
+  const vercel = JSON.parse(fs.readFileSync(new URL("../vercel.json", import.meta.url)));
+  const reglas = vercel.headers.filter(h => h.headers.some(x => x.key === "X-Robots-Tag"));
+  expect(reglas).toHaveLength(1);
+  expect(reglas[0].missing.map(m => m.value)).toEqual(["sofiaprefirma.com", "www.sofiaprefirma.com"]);
+  expect(fs.readFileSync(new URL("../robots.txt", import.meta.url), "utf8")).toContain("Disallow: /");
+  expect(fs.readFileSync(new URL("../index.html", import.meta.url), "utf8")).toContain('content="noindex, nofollow"');
+});

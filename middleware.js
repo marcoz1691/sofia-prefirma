@@ -20,6 +20,22 @@ const RECURSOS_COMERCIALES = new Set([
 ]);
 export const config = { matcher: ["/:path*"] };
 
+// Solo el dominio público del sitio comercial se indexa. Previews, *.vercel.app y el piloto de la notaría quedan fuera.
+const DOMINIOS_PUBLICOS = new Set(["sofiaprefirma.com", "www.sofiaprefirma.com"]);
+const PAGINAS_INDEXABLES = ["/propuesta", "/planes-detalle.html"];
+
+export function robotsComercial(url) {
+  const u = new URL(url);
+  if (!DOMINIOS_PUBLICOS.has(u.hostname.toLowerCase())) return "User-agent: *\nDisallow: /\n";
+  return ["User-agent: *", "Allow: /$", ...PAGINAS_INDEXABLES.map(p => `Allow: ${p}`), "Allow: /assets/", "Allow: /css/", "Allow: /js/", "Disallow: /", "",
+    "Sitemap: https://sofiaprefirma.com/sitemap.xml", ""].join("\n");
+}
+
+export function sitemapComercial() {
+  const urls = PAGINAS_INDEXABLES.map(p => `  <url><loc>https://sofiaprefirma.com${p}</loc></url>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+}
+
 export function esVitrinaComercial(url, env = process.env) {
   const host = new URL(url).hostname.toLowerCase();
   return env.SOFIA_MODO === "comercial"
@@ -41,6 +57,11 @@ export default async function middleware(request) {
         status: 404,
         headers: { "Cache-Control": "no-store" },
       });
+    }
+    if (ruta === "/robots.txt") return new Response(robotsComercial(request.url), { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
+    if (ruta === "/sitemap.xml") {
+      if (!DOMINIOS_PUBLICOS.has(new URL(request.url).hostname.toLowerCase())) return new Response("Página no encontrada.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      return new Response(sitemapComercial(), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
     }
     if (ruta === "/" || ruta === "/propuesta") return rewrite(new URL("/propuesta-sofia.html", request.url));
     if (RECURSOS_COMERCIALES.has(ruta) || ruta.startsWith("/assets/fonts/")) return next();
