@@ -9,8 +9,7 @@ test("la propuesta presenta la suite Sofía y sus planes", async ({ page }) => {
   await expect(page.locator(".suite h3")).toHaveText(["Antesala", "Alista", "Clara", "Pronta", "Nexo", "Lúcida"]);
   await expect(page.locator(".plan__precio strong")).toHaveText(["59", "119", "149", "179", "229"]);
   await expect(page.locator(".plan--recomendado .plan__badge")).toHaveText("Recomendado");
-  await expect(page.locator(".comparar thead th[scope=col]").filter({ hasNotText: "Función" })).toHaveText(["Entrada", "PreFirma", "Equipo", "Integral", "Integral Plus"]);
-  await expect(page.getByRole("row", { name: /Usuarios del panel/ })).toContainText("3581530");
+  await expect(page.locator(".planes__detalle a")).toHaveAttribute("href", "planes-detalle.html");
   await expect(page.locator(".oferta")).toContainText("con el plan PreFirma o superior");
   await expect(page.locator(".planes__grid .plan--vitrina")).toHaveCount(0);
   await expect(page.locator(".oferta")).toContainText("Notarías fundadoras");
@@ -124,4 +123,11 @@ test("la propuesta tiene una versión limpia para imprimir en PDF", async ({ pag
   await expect(page.locator(".hero__acciones")).toBeHidden();
   await expect(page.locator(".suite")).toBeVisible();
   await expect(page.locator(".planes__grid")).toBeVisible();
+});
+
+test("el detalle de planes compara todas las funciones y vuelve a la propuesta", async ({ page }) => {
+  await page.goto("/planes-detalle.html");
+  await expect(page.locator(".comparar thead th[scope=col]").filter({ hasNotText: "Función" })).toHaveText(["Entrada", "PreFirma", "Equipo", "Integral", "Integral Plus"]);
+  await expect(page.getByRole("row", { name: /Usuarios del panel/ })).toContainText("3581530");
+  await expect(page.locator(".detalle__volver")).toHaveAttribute("href", "propuesta-sofia.html#planes");
 });

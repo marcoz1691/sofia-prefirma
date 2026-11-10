@@ -3,6 +3,7 @@ export const ID_PROYECTO_COMERCIAL = "prj_MJWXidhzCEkrzFMOdKi61GSfSjPj";
 const RUTAS_CON_INTERRUPTOR = new Set(["/", "/index.html", "/cita.html", "/asistente.html", "/privacidad.html", "/404.html", "/turno.html", "/sala.html"]);
 const RECURSOS_COMERCIALES = new Set([
   "/propuesta-sofia.html",
+  "/planes-detalle.html",
   "/css/propuesta-sofia.css",
   "/js/propuesta-sofia.js",
   "/js/movimiento.js",
