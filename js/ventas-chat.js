@@ -5,7 +5,7 @@ import { crearAceptacion } from "./aceptacion.js";
 import { AVISO_PRIVACIDAD_PREFIRMA, TERMINOS_PREFIRMA } from "./legal.js";
 
 const CLAVE = "sp-ventas-chat";
-const AVATAR = '<span class="vchat__avatar"><img src="assets/logo/sofia-prefirma-oficial-simbolo.svg" alt=""></span>';
+const AVATAR = '<span class="vchat__avatar"><img src="assets/logo/sofia-prefirma-oficial-simbolo.svg?v=2" alt=""></span>';
 const $ = (s) => document.querySelector(s);
 const abrirBoton = $("#vchat-abrir"), panel = $("#vchat"), hilo = $("#vchat-hilo"), lista = $("#vchat-mensajes");
 const form = $("#vchat-form"), campo = $("#vchat-texto"), enviarBoton = $("#vchat-enviar"), inicio = $("#vchat-inicio");
