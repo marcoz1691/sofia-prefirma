@@ -34,7 +34,7 @@ footer .marca img{height:80px}
 .boton--claro:hover{background:#E6F6F9}
 .boton:active{transform:translateY(0) scale(.98)}
 .boton:focus-visible,.topbar__cta:focus-visible,.topbar nav a:focus-visible{outline:2px solid var(--menta);outline-offset:3px}
-@media print{.hero::before{display:none}footer .marca img{content:url("../assets/logo/sofia-prefirma-oficial.svg")}}
+@media print{.hero::before{display:none}footer .marca img{content:url("../assets/logo/sofia-prefirma-oficial.svg?v=2")}}
 /* Chat de ventas: Sofía, asesora de SOFIA PreFirma */
 .enlace-chat{border:0;background:none;padding:0;font:inherit;color:var(--menta);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .enlace-chat:focus-visible{outline:2px solid var(--menta);outline-offset:3px}

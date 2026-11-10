@@ -20,7 +20,7 @@ test("la propuesta presenta la suite Sofía y sus planes", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Guardar en PDF/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "De la demostración a una primera etapa controlada." })).toBeVisible();
   await expect(page.locator(".piloto__pasos > div")).toHaveCount(4);
-  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "assets/logo/sofia-prefirma-oficial-simbolo.svg");
+  await expect(page.locator('link[rel="icon"]')).toHaveAttribute("href", "assets/logo/sofia-prefirma-oficial-simbolo.svg?v=2");
 });
 
 test("el chat de ventas pide las dos casillas y muestra la respuesta de Sofía", async ({ page }) => {
