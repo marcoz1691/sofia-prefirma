@@ -8,7 +8,7 @@ import { sistemaVentas, PLANES_CORREO } from "../api/_lib/catalogo-ventas.js";
 const pedir = (m, cuerpo, ip = "190.2.2.2") => m.POST(new Request("https://sofiaprefirma.com/api/ventas", {
   method: "POST", headers: { "Content-Type": "application/json", "x-forwarded-for": ip }, body: JSON.stringify(cuerpo) }));
 
-it("arma el dominio del oficio del Consejo: junto, sin tildes, eñes ni ceros a la izquierda", () => {
+it("arma el dominio notaria(número)(cantón).com: junto, sin tildes, eñes ni ceros a la izquierda", () => {
   expect(armarDominio("41", "Quito")).toBe("notaria41quito.com");
   expect(armarDominio("007", "Santo Domingo")).toBe("notaria7santodomingo.com");
   expect(armarDominio(3, "Rumiñahui")).toBe("notaria3ruminahui.com");
@@ -59,13 +59,12 @@ it("el pedido de correo se registra con el dominio y avisa al asesor", async () 
   expect((await almacen.prospectos()).find((p) => p.plan === "Correo Notaría completa").detalle).toBe("Correo · dominio por definir · pago mensual");
 });
 
-it("Sofía conoce los planes de correo, el oficio y que no hay plazo", () => {
-  expect(PLANES_CORREO.map((p) => [p.nombre, p.instalacion, p.mensual])).toEqual([["Correo del Notario", 79, 12], ["Correo Notaría completa", 120, 29]]);
+it("Sofía conoce los planes de correo y no menciona al Consejo de la Judicatura", () => {
+  expect(PLANES_CORREO.map((p) => [p.nombre, p.instalacion, p.mensual])).toEqual([["Correo del Notario", 29, 12], ["Correo Notaría completa", 29, 29]]);
   const s = sistemaVentas();
-  expect(s).toContain("Correo del Notario (Cumple el oficio del Consejo): instalación USD 79 (pago único) y USD 12 al mes, o USD 120 al año");
-  expect(s).toContain("CJ-DNDMCSJ-2026-1194-OF");
-  expect(s).toContain("El oficio no menciona un plazo");
-  expect(s).toContain("no es parte del Consejo de la Judicatura");
+  expect(s).toContain("Correo del Notario (El correo del notario, con el nombre de su notaría): instalación USD 29 (pago único, gratis con pago anual) y USD 12 al mes, o USD 120 al año");
+  expect(s).toContain("No menciones al Consejo de la Judicatura");
+  expect(s).not.toContain("CJ-DNDMCSJ");
   expect(s).toContain("Con el plan PreFirma o superior de Sofía, el plan Correo del Notario va incluido");
 });
 
@@ -97,7 +96,8 @@ it("los textos legales de SOFIA PreFirma cubren el servicio de correo y usan el 
   expect(terminos).toContain(`Versión ${TERMINOS_PREFIRMA}`);
   expect(privacidad).toContain(`Versión ${AVISO_PRIVACIDAD_PREFIRMA}`);
   expect(terminos).toContain("Servicio de dominio y correo para notarías");
-  expect(terminos).toContain("No somos parte del Consejo de la Judicatura");
+  expect(terminos).not.toContain("Consejo");
+  expect(terminos).toContain("no se cobra con pago anual");
   expect(privacidad).toContain("datos del titular del dominio");
   for (const t of [terminos, privacidad]) {
     expect(t).toContain("ventas@sofiaprefirma.com");
