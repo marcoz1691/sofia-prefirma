@@ -62,7 +62,7 @@ export function sistemaVentas({ whatsapp = "" } = {}) {
     :     `- ${p.nombre} (${p.lema}${p.recomendado ? ", el recomendado" : ""}): USD ${p.mensual} al mes, o USD ${anual(p.mensual)} al mes con pago anual (USD ${p.mensual * 10} al año). Para ${p.para}. Módulos: ${p.modulos.join(", ")}. Incluye: ${p.incluye.join("; ")}.`).join("\n");
   const modulos = MODULOS.map(([n, v, d]) => `- ${n} (${v}): ${d}`).join("\n");
   const ampliaciones = AMPLIACIONES.map(([n, precio, d]) => `- ${n}, ${precio}: ${d}.`).join("\n");
-  const correo = PLANES_CORREO.map((p) => `- ${p.nombre} (${p.lema}): instalación USD ${p.instalacion} (pago único, gratis con pago anual) y USD ${p.mensual} al mes, o USD ${p.mensual * 10} al año. Incluye: ${p.incluye.join("; ")}.${p.extra ? ` ${p.extra}.` : ""}`).join("\n");
+  const correo = PLANES_CORREO.map((p) => `- ${p.nombre} (${p.lema}): instalación USD ${p.instalacion} (pago único, gratis con pago anual) y USD ${p.mensual} al mes, o USD ${p.mensual * 10} al año (2 meses gratis). Incluye: ${p.incluye.join("; ")}.${p.extra ? ` ${p.extra}.` : ""}`).join("\n");
   const contacto = whatsapp
     ? `Si la persona prefiere hablar ya con alguien, comparte este enlace de WhatsApp: https://wa.me/${whatsapp}`
     : "Si la persona prefiere hablar con alguien, registra su interés para que un asesor la contacte.";

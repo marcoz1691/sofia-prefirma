@@ -74,7 +74,7 @@ it("la página de correo tiene los mismos precios que el catálogo de Sofía", a
   for (const p of PLANES_CORREO) {
     const tarjeta = html.split(`data-plan="${p.nombre}"`)[1].split("</article>")[0];
     expect(tarjeta).toContain(`<strong>${p.mensual}</strong>`);
-    expect(tarjeta).toContain(`o USD ${p.mensual * 10} al año · instalación USD ${p.instalacion}`);
+    expect(tarjeta).toContain(`o USD ${p.mensual * 10} al año (2 meses gratis) · instalación USD ${p.instalacion}`);
     for (const linea of p.incluye) expect(tarjeta).toContain(`<li>${linea}</li>`);
   }
 });
