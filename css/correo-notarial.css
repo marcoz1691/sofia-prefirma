@@ -38,6 +38,8 @@
 .correo__extra{margin:-12px 0 20px;font-size:13px;color:var(--muted)}
 .correo__sofia{display:flex;gap:10px;align-items:flex-start;margin:18px 0 0;padding:16px 18px;border-radius:16px;background:var(--noche);color:rgba(255,255,255,.8);font-size:15px;line-height:1.5}
 .correo__sofia b{color:#fff}
+.correo__sofia p{margin:0 0 12px}
+.correo__sofia .boton{text-decoration:none;color:var(--noche)}
 .correo__sofia a{color:var(--menta);text-decoration:underline}
 .correo__sofia i{color:var(--menta);font-size:20px;flex:none}
 .correo__notas{margin:12px 0 0;font-size:13px;color:var(--muted)}

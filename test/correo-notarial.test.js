@@ -54,13 +54,13 @@ it("el pedido de correo se registra con el dominio y avisa al asesor", async () 
   expect(r.status).toBe(200);
   expect((await almacen.prospectos())[0]).toMatchObject({ plan: "Correo del Notario", detalle: "Correo · notaria12cuenca.com · pago anual" });
   expect(avisar.mock.calls[0][0]).toContain("notaria12cuenca.com");
-  await pedir(m, { accion: "solicitar", plan: "Correo Notaría completa", nombre: "Ana Ruiz", notaria: "Notaría 12 de Cuenca",
+  await pedir(m, { accion: "solicitar", plan: "Correo del Equipo", nombre: "Ana Ruiz", notaria: "Notaría 12 de Cuenca",
     telefono: "0987654321", dominio: "<script>.com", aceptaTerminos: true, aceptaDatos: true }, "190.4.4.4");
-  expect((await almacen.prospectos()).find((p) => p.plan === "Correo Notaría completa").detalle).toBe("Correo · dominio por definir · pago mensual");
+  expect((await almacen.prospectos()).find((p) => p.plan === "Correo del Equipo").detalle).toBe("Correo · dominio por definir · pago mensual");
 });
 
 it("Sofía conoce los planes de correo y no menciona al Consejo de la Judicatura", () => {
-  expect(PLANES_CORREO.map((p) => [p.nombre, p.instalacion, p.mensual])).toEqual([["Correo del Notario", 60, 14], ["Correo Notaría completa", 60, 49], ["Página web + correo", 60, 39]]);
+  expect(PLANES_CORREO.map((p) => [p.nombre, p.instalacion, p.mensual])).toEqual([["Correo del Notario", 60, 14], ["Correo del Equipo", 60, 49], ["Página web + correo", 60, 39]]);
   const s = sistemaVentas();
   expect(s).toContain("Correo del Notario (El correo del notario, con el nombre de su notaría): instalación USD 60 (pago único, gratis con pago anual) y USD 14 al mes, o USD 140 al año");
   expect(s).toContain("No menciones al Consejo de la Judicatura");
