@@ -41,6 +41,19 @@ export const AMPLIACIONES = [
   ["Pagos con tarjeta para tus clientes", "próximamente", "tus clientes podrán pagar su trámite con tarjeta desde «Mis trámites»; lo estamos preparando"],
 ];
 
+// Correo con el dominio de la notaría (oficio del Consejo de la Judicatura). Es la misma información de correo-notarial.html.
+// El pago anual son 10 mensualidades, igual que en los planes de Sofía.
+export const PLANES_CORREO = [
+  { nombre: "Correo del Notario", lema: "Cumple el oficio del Consejo", instalacion: 79, mensual: 12,
+    incluye: ["El dominio notaria(número)(cantón).com, a nombre de tu notaría", "El correo nombre.apellido@ del notario o la notaria",
+      "Registros antispam (SPF, DKIM y DMARC) para que las notificaciones no caigan en spam", "Guía para actualizar el correo en el SIN", "Soporte por WhatsApp"] },
+  { nombre: "Correo Notaría completa", lema: "Todo tu equipo con el correo de la notaría", instalacion: 120, mensual: 29,
+    incluye: ["Todo el plan Correo del Notario", "Hasta 10 buzones: matriceros, contacto@ y los que necesites", "Migración de los correos que hoy tienes en Gmail",
+      "Altas y bajas del personal: cuando alguien se va, su correo queda en la notaría", "Firma de correo y una hora de capacitación"],
+    extra: "USD 3 al mes por cada buzón adicional" },
+];
+export const CORREO_INCLUIDO_DESDE = "PreFirma";
+
 const anual = (m) => Math.round(m * 10 / 12);
 
 export function sistemaVentas({ whatsapp = "" } = {}) {
@@ -49,6 +62,7 @@ export function sistemaVentas({ whatsapp = "" } = {}) {
     :     `- ${p.nombre} (${p.lema}${p.recomendado ? ", el recomendado" : ""}): USD ${p.mensual} al mes, o USD ${anual(p.mensual)} al mes con pago anual (USD ${p.mensual * 10} al año). Para ${p.para}. Módulos: ${p.modulos.join(", ")}. Incluye: ${p.incluye.join("; ")}.`).join("\n");
   const modulos = MODULOS.map(([n, v, d]) => `- ${n} (${v}): ${d}`).join("\n");
   const ampliaciones = AMPLIACIONES.map(([n, precio, d]) => `- ${n}, ${precio}: ${d}.`).join("\n");
+  const correo = PLANES_CORREO.map((p) => `- ${p.nombre} (${p.lema}): instalación USD ${p.instalacion} (pago único) y USD ${p.mensual} al mes, o USD ${p.mensual * 10} al año. Incluye: ${p.incluye.join("; ")}.${p.extra ? ` ${p.extra}.` : ""}`).join("\n");
   const contacto = whatsapp
     ? `Si la persona prefiere hablar ya con alguien, comparte este enlace de WhatsApp: https://wa.me/${whatsapp}`
     : "Si la persona prefiere hablar con alguien, registra su interés para que un asesor la contacte.";
@@ -81,6 +95,13 @@ ${modulos}
 
 Ampliaciones opcionales (calendario, PDF con marca y reputación ya vienen en los planes superiores):
 ${ampliaciones}
+
+Correo con el dominio de la notaría (servicio aparte de los planes de Sofía):
+El Consejo de la Judicatura pidió a todas las notarías, mediante el oficio CJ-DNDMCSJ-2026-1194-OF del 17 de noviembre de 2026, registrar en el Sistema Informático Notarial (SIN) un correo con el formato nombre.apellido@notaria(número)(cantón).com, para recibir las notificaciones del Sistema Telemático Notarial (SISTELNOT). El oficio no menciona un plazo: no inventes uno. SOFIA PreFirma compra el dominio a nombre de la notaría, crea los correos y los administra. SOFIA PreFirma es un proveedor privado: no es parte del Consejo de la Judicatura, no habla en su nombre y su servicio no es oficial ni está avalado por el Consejo; dilo así si preguntan.
+${correo}
+- Con el plan ${CORREO_INCLUIDO_DESDE} o superior de Sofía, el plan Correo del Notario va incluido, sin instalación ni mensualidad.
+- Precios más IVA. La disponibilidad del dominio y su forma exacta (cantones con varias palabras o con ñ) se confirman con la notaría antes de comprarlo.
+- La notaría puede revisar si su dominio está libre y pedir el servicio en https://sofiaprefirma.com/correo-notarial. Cuando haya interés, registra los datos con registrar_interes como en los demás casos.
 
 Cómo trabaja: Antesala identifica el trámite y hace las preguntas según el caso; Alista genera requisitos personalizados y organiza la información; Clara clasifica documentos y señala lo que requiere revisión humana; el equipo recibe el expediente ordenado y el notario revisa, decide y autoriza.
 

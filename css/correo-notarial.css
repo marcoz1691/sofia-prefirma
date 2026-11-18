@@ -1,0 +1,60 @@
+/* correo-notarial.html: usa los estilos de propuesta-sofia.css y agrega el buscador de dominio, las ventajas y los dos planes de correo. */
+.correo .detalle{max-width:980px}
+.correo .detalle__bajada b{color:var(--tinta);overflow-wrap:anywhere}
+.correo section{padding:0}
+.correo [hidden]{display:none!important}
+.correo h2{font-size:clamp(26px,3.4vw,36px);line-height:1.1;letter-spacing:-.03em;margin:0 0 18px;color:var(--tinta)}
+
+.correo .buscador{margin:40px 0 56px;padding:30px;border-radius:var(--radio);background:#fff;border:1px solid var(--linea);box-shadow:0 20px 60px rgba(7,27,44,.08)}
+.buscador__form{display:grid;grid-template-columns:minmax(0,.6fr) minmax(0,1.4fr) auto;gap:12px;align-items:end}
+.buscador__form label{display:grid;gap:5px;font-size:12.5px;font-weight:650}
+.buscador__form input{width:100%;border:1px solid var(--linea);border-radius:11px;padding:12px 13px;font:16px Archivo,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--tinta);background:#fff}
+.buscador__form input:focus{outline:3px solid rgba(15,139,163,.22);border-color:var(--verde)}
+.buscador__form .boton{min-height:47px}
+.buscador__vista{margin:16px 0 0;font-size:15px;color:var(--muted)}
+.buscador__vista b{color:var(--tinta);overflow-wrap:anywhere}
+.buscador__resultado{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;padding:13px 15px;border-radius:14px;font-size:14.5px;line-height:1.45}
+.buscador__resultado i{font-size:20px;line-height:1.1;flex:none}
+.buscador__resultado b{overflow-wrap:anywhere}
+.buscador__resultado a{color:inherit;font-weight:700;text-decoration:underline}
+.buscador__resultado.es-libre{background:#E8F6EE;color:#14583A}
+.buscador__resultado.es-ocupado{background:#EAF5F7;color:#0B5566}
+.buscador__resultado.es-desconocido,.buscador__resultado.es-aviso{background:#FFF6E5;color:#6B4A0B}
+.buscador__nota{margin:14px 0 0;font-size:13px;color:var(--muted)}
+
+.ventajas{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:64px}
+.ventajas>div{background:#fff;border:1px solid var(--linea);border-radius:18px;padding:22px}
+.ventajas i{font-size:26px;color:var(--verde)}
+.ventajas h3{font-size:17px;line-height:1.25;margin:10px 0 6px}
+.ventajas p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+
+.correo__grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.correo__grid .plan{grid-column:auto;max-width:none;margin:0}
+.correo__grid .plan .boton{align-self:flex-start}
+.correo__extra{margin:-12px 0 20px;font-size:13px;color:var(--muted)}
+.correo__sofia{display:flex;gap:10px;align-items:flex-start;margin:18px 0 0;padding:16px 18px;border-radius:16px;background:var(--noche);color:rgba(255,255,255,.8);font-size:15px;line-height:1.5}
+.correo__sofia b{color:#fff}
+.correo__sofia a{color:var(--menta);text-decoration:underline}
+.correo__sofia i{color:var(--menta);font-size:20px;flex:none}
+.correo__notas{margin:12px 0 0;font-size:13px;color:var(--muted)}
+
+.correo__pedir{margin-top:64px;padding:30px!important;border-radius:var(--radio);background:#fff;border:1px solid var(--linea)}
+.correo__pedir>p{margin:0 0 20px;color:var(--muted)}
+.correo__pedir .boton{justify-self:start}
+.correo__ancho{grid-column:1/-1}
+.correo__dominio{margin:0;padding:10px 12px;border-radius:11px;background:#EAF5F7;color:#0B5566;font-size:14px;font-weight:650;overflow-wrap:anywhere}
+.correo__listo{display:grid;gap:8px;justify-items:start}
+.correo__listo i{font-size:30px;color:var(--verde)}
+.correo__listo h3{margin:0;font-size:24px;letter-spacing:-.03em}
+.correo__listo p{margin:0;color:var(--muted)}
+.correo footer{padding:30px 28px 50px;text-align:center;color:var(--muted);font-size:14px}
+
+@media(max-width:860px){.ventajas{grid-template-columns:1fr 1fr}.correo__grid{grid-template-columns:1fr}}
+@media(max-width:620px){
+  .buscador,.correo__pedir{padding:22px 18px!important}
+  .buscador__form{grid-template-columns:1fr}
+  .buscador__form .boton{width:100%}
+  .ventajas{grid-template-columns:1fr}
+  .correo .eleccion__campos{grid-template-columns:1fr}
+  .correo__pedir .boton{justify-self:stretch}
+}
