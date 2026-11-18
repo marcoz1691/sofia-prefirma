@@ -11,6 +11,7 @@ test("la notaría revisa si su dominio está libre y pide su correo", async ({ p
   await page.goto("/correo-notarial.html");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Un correo con el nombre de su notaría");
   await expect(page.getByText(/Consejo|oficio|SISTELNOT/)).toHaveCount(0);
+  await expect(page.locator(".correo__desde")).toContainText("Desde USD 10 al mes");
   await page.getByLabel("Número de su notaría").fill("12");
   await page.getByLabel("Cantón").fill("Cuenca");
   await expect(page.locator("#b-correo")).toHaveText("nombre.apellido@notaria12cuenca.com");
