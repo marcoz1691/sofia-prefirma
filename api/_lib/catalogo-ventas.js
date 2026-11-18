@@ -44,13 +44,13 @@ export const AMPLIACIONES = [
 // Correo con el dominio propio de la notaría. Es la misma información de correo-notarial.html.
 // El pago anual son 10 mensualidades e incluye la instalación, igual que en los planes de Sofía.
 export const PLANES_CORREO = [
-  { nombre: "Correo del Notario", lema: "El correo del notario, con el nombre de su notaría", instalacion: 50, mensual: 12,
+  { nombre: "Correo del Notario", lema: "El correo del notario, con el nombre de su notaría", instalacion: 60, mensual: 14,
     incluye: ["El dominio notaria(número)(cantón).com, a nombre de su notaría", "El correo nombre.apellido@ del notario o la notaria",
       "Configuración antispam (SPF, DKIM y DMARC) para que sus correos no caigan en spam", "Configuración en su celular y su computadora", "Soporte por WhatsApp"] },
-  { nombre: "Correo Notaría completa", lema: "Todo su equipo con el correo de la notaría", instalacion: 50, mensual: 35,
+  { nombre: "Correo Notaría completa", lema: "Todo su equipo con el correo de la notaría", instalacion: 60, mensual: 40,
     incluye: ["Todo el plan Correo del Notario", "Hasta 10 buzones: matriceros, contacto@ y los que necesite", "Migración de los correos que hoy tiene en Gmail",
       "Altas y bajas del personal: cuando alguien se va, su correo queda en la notaría", "Firma de correo y una hora de capacitación"],
-    extra: "USD 3 al mes por cada buzón adicional" },
+    extra: "USD 3,50 al mes por cada buzón adicional" },
 ];
 export const CORREO_INCLUIDO_DESDE = "PreFirma";
 
@@ -76,7 +76,7 @@ Hablas con notarios, personal de notarías y personas que evalúan contratar la 
 Reglas:
 - Español de Ecuador, trato de tú, frases cortas y claras. Respuestas breves: dos a cinco frases o una lista corta. Sin emojis.
 - No inventes precios, descuentos, plazos, funciones, clientes ni cifras. Si algo no está abajo, dilo y ofrece registrar la pregunta para que un asesor responda.
-- Todos los precios son más IVA.
+- Los precios de los planes de Sofía son más IVA. Los del servicio de correo ya incluyen IVA.
 - SOFIA PreFirma no es una notaría ni da asesoría legal. Prepara y orienta; nunca autoriza actos notariales: el notario revisa, decide y da fe. Si alguien pregunta por un trámite personal (vender una casa, un poder), explica que esta página es de la plataforma para notarías y que debe consultar a su notaría.
 - Si alguien pide algo fuera de este tema, responde con amabilidad que solo puedes ayudar con SOFIA PreFirma.
 - ${contacto}
@@ -99,11 +99,11 @@ ${ampliaciones}
 Correo con el dominio propio de la notaría (servicio aparte de los planes de Sofía):
 Muchas notarías atienden con cuentas personales de Gmail o Hotmail. SOFIA PreFirma les ofrece correos profesionales con su propio dominio, como nombre.apellido@notaria12cuenca.com: registra el dominio a nombre de la notaría, crea los correos y los administra. Preséntalo como una forma de formalizar la imagen de la notaría y de que los correos se queden en ella aunque cambie el personal. No menciones al Consejo de la Judicatura, oficios ni sistemas del Estado; si la persona pregunta, di que el formato notaria(número)(cantón).com sirve para lo que necesite y que un asesor puede ayudarle, sin afirmar que es un requisito ni que somos parte de alguna institución.
 ${correo}
-- La instalación es un pago único de USD 50 y es gratis con pago anual. Con pago anual, Correo del Notario equivale a USD 10 al mes.
+- La instalación es un pago único de USD 60 y es gratis con pago anual.
 - Garantía: si el correo no queda funcionando en un día hábil desde que se confirma el dominio, la notaría no paga la instalación.
 - Precio de lanzamiento garantizado por 12 meses para las notarías que contraten hasta el 31 de enero de 2027.
 - Con el plan ${CORREO_INCLUIDO_DESDE} o superior de Sofía, el plan Correo del Notario va incluido, sin instalación ni mensualidad.
-- Precios más IVA. La disponibilidad del dominio y su forma exacta (cantones con varias palabras o con ñ) se confirman con la notaría antes de registrarlo.
+- Los precios del correo ya incluyen IVA. La disponibilidad del dominio y su forma exacta (cantones con varias palabras o con ñ) se confirman con la notaría antes de registrarlo.
 - La notaría puede revisar si su dominio está libre y pedir el servicio en https://sofiaprefirma.com/correo-notarial. Cuando haya interés, registra los datos con registrar_interes como en los demás casos.
 
 Cómo trabaja: Antesala identifica el trámite y hace las preguntas según el caso; Alista genera requisitos personalizados y organiza la información; Clara clasifica documentos y señala lo que requiere revisión humana; el equipo recibe el expediente ordenado y el notario revisa, decide y autoriza.
