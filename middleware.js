@@ -4,6 +4,10 @@ const RUTAS_CON_INTERRUPTOR = new Set(["/", "/index.html", "/cita.html", "/asist
 const RECURSOS_COMERCIALES = new Set([
   "/propuesta-sofia.html",
   "/planes-detalle.html",
+  "/correo-notarial.html",
+  "/css/correo-notarial.css",
+  "/js/correo-notarial.js",
+  "/js/dominio-notarial.js",
   "/css/propuesta-sofia.css",
   "/js/propuesta-sofia.js",
   "/js/movimiento.js",
@@ -22,7 +26,7 @@ export const config = { matcher: ["/:path*"] };
 
 // Solo el dominio público del sitio comercial se indexa. Previews, *.vercel.app y el piloto de la notaría quedan fuera.
 const DOMINIOS_PUBLICOS = new Set(["sofiaprefirma.com", "www.sofiaprefirma.com"]);
-const PAGINAS_INDEXABLES = ["/propuesta", "/planes-detalle.html"];
+const PAGINAS_INDEXABLES = ["/propuesta", "/planes-detalle.html", "/correo-notarial"];
 
 export function robotsComercial(url) {
   const u = new URL(url);
@@ -64,6 +68,7 @@ export default async function middleware(request) {
       return new Response(sitemapComercial(), { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
     }
     if (ruta === "/" || ruta === "/propuesta") return rewrite(new URL("/propuesta-sofia.html", request.url));
+    if (ruta === "/correo-notarial") return rewrite(new URL("/correo-notarial.html", request.url));
     if (RECURSOS_COMERCIALES.has(ruta) || ruta.startsWith("/assets/fonts/")) return next();
     return new Response("Página no encontrada.", {
       status: 404,

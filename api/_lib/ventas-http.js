@@ -4,8 +4,10 @@ import { leerAjustes, leerFunciones } from "./funciones.js";
 import { huellaIp } from "./huella.js";
 import { registrarConsentimiento } from "./consentimiento.js";
 import { AVISO_PRIVACIDAD_PREFIRMA, TERMINOS_PREFIRMA } from "../../js/legal.js";
-import { PLANES, MES_GRATIS_DESDE } from "./catalogo-ventas.js";
+import { PLANES, MES_GRATIS_DESDE, PLANES_CORREO } from "./catalogo-ventas.js";
 import { registrar } from "./metricas.js";
+import { armarDominio, esDominioNotarial } from "../../js/dominio-notarial.js";
+import { consultarDominio as consultarRdap } from "./disponibilidad-dominio.js";
 
 const HORA = 3600 * 1000, DIA = 24 * HORA;
 const LIMITES = { porSesion: 25, porIp: 60, porDia: 600 };
@@ -21,7 +23,20 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), { status
 const IVA = 0.15;
 const SIN_PAGO = "El pago en línea todavía no está disponible. Un asesor te enviará el enlace de pago.";
 
-export function crearManejadorVentas({ agente, almacen, avisar = async () => {}, proveedor = null, ahora = () => Date.now(), limites = LIMITES }) {
+export function crearManejadorVentas({ agente, almacen, avisar = async () => {}, proveedor = null, ahora = () => Date.now(), limites = LIMITES,
+  consultarDominio = consultarRdap }) {
+  // «¿Está libre tu dominio?» de correo-notarial.html: arma el dominio del oficio del Consejo y pregunta al registro .com.
+  async function dominio(b, request) {
+    const d = armarDominio(b.numero, b.canton);
+    if (!d) return json({ error: "Escribe el número de tu notaría y tu cantón." }, 400);
+    const t = ahora();
+    const [nIp, nDia] = await Promise.all([almacen.contarUso("ventas:dominio:ip:" + huellaIp(request), HORA, t), almacen.contarUso("ventas:dominio:dia", DIA, t)]);
+    if (nIp > 30 || nDia > 2000) return json({ error: "Hiciste muchas consultas seguidas. Inténtalo en un rato." }, 429);
+    const estado = await consultarDominio(d);
+    await registrar(almacen, "ventas.dominio_consultado", 1, t);
+    return json({ dominio: d, correo: "nombre.apellido@" + d, estado });
+  }
+
   // Pago en línea del plan: el servidor fija el monto (plan + período + IVA) y PagoMedios aloja la página de pago.
   async function pagar(b, request) {
     if (!proveedor) return json({ error: SIN_PAGO }, 404);
@@ -97,7 +112,8 @@ export function crearManejadorVentas({ agente, almacen, avisar = async () => {},
     const p = { nombre: limpio(b.nombre, 80), notaria: limpio(b.notaria, 120), ciudad: limpio(b.ciudad, 60),
       cargo: CARGOS.includes(b.cargo) ? b.cargo : "", telefono: limpio(b.telefono, 30).replace(/[^\d+ ()-]/g, ""),
       correo: limpio(b.correo, 200).toLowerCase() };
-    const plan = PLANES.find((x) => x.nombre === b.plan), periodo = b.periodo === "anual" ? "anual" : "mensual";
+    const plan = PLANES.find((x) => x.nombre === b.plan) || PLANES_CORREO.find((x) => x.nombre === b.plan), periodo = b.periodo === "anual" ? "anual" : "mensual";
+    const esCorreo = PLANES_CORREO.includes(plan), dominioPedido = esDominioNotarial(b.dominio) ? b.dominio : "";
     if (p.nombre.length < 2) return json({ error: "Escribe tu nombre.", campo: "nombre" }, 400);
     if (p.notaria.length < 2) return json({ error: "Escribe el nombre o número de tu notaría.", campo: "notaria" }, 400);
     if (p.telefono.replace(/\D/g, "").length < 7) return json({ error: "Escribe un celular válido para contactarte.", campo: "telefono" }, 400);
@@ -107,7 +123,8 @@ export function crearManejadorVentas({ agente, almacen, avisar = async () => {},
     const t = ahora(), huella = huellaIp(request);
     const [nIp, nDia] = await Promise.all([almacen.contarUso("ventas:solicitud:ip:" + huella, HORA, t), almacen.contarUso("ventas:solicitud:dia", DIA, t)]);
     if (nIp > 5 || nDia > 200) return json({ error: "Recibimos muchas solicitudes desde esta conexión. Inténtalo más tarde o escríbele a Sofía." }, 429);
-    const detalle = plan.nombre === "Vitrina" ? `Vitrina · pago ${periodo}`
+    const detalle = esCorreo ? `Correo · ${dominioPedido || "dominio por definir"} · pago ${periodo}`
+      : plan.nombre === "Vitrina" ? `Vitrina · pago ${periodo}`
       : plan.mensual >= MES_GRATIS_DESDE ? `Mes de prueba gratis · pago ${periodo}` : `Sin mes de prueba · pago ${periodo}`;
     await almacen.guardarProspecto({ conversacionId: null, ...p, plan: plan.nombre, motivo: "contratar", detalle });
     await registrarConsentimiento(almacen, { canal: "formulario-ventas", titular: "form:" + p.telefono.replace(/\D/g, ""), texto: TEXTO_FORMULARIO, t: new Date(t),
@@ -127,6 +144,7 @@ export function crearManejadorVentas({ agente, almacen, avisar = async () => {},
       if (b?.accion === "solicitar") return solicitar(b, request);
       if (b?.accion === "pagar") return pagar(b, request);
       if (b?.accion === "estadoPago") return estadoPago(b);
+      if (b?.accion === "dominio") return dominio(b, request);
       const sesion = String(b?.sesion || ""), texto = String(b?.texto || "").trim();
       if (!/^[A-Za-z0-9_-]{12,64}$/.test(sesion)) return json({ error: "Sesión inválida" }, 400);
       if (!texto) return json({ error: "Escribe un mensaje" }, 400);
