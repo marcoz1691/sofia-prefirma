@@ -30,7 +30,6 @@
 
 .correo__grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
 .correo__grid .plan{grid-column:auto;max-width:none;margin:0}
-.correo__grid .plan .boton{align-self:flex-start}
 .correo__extra{margin:-12px 0 20px;font-size:13px;color:var(--muted)}
 .correo__sofia{display:flex;gap:10px;align-items:flex-start;margin:18px 0 0;padding:16px 18px;border-radius:16px;background:var(--noche);color:rgba(255,255,255,.8);font-size:15px;line-height:1.5}
 .correo__sofia b{color:#fff}
