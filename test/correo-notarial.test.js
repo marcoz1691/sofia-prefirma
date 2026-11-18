@@ -88,3 +88,19 @@ it("el sitio comercial sirve la página de correo y la incluye en el sitemap", a
     expect((await middleware(new Request("https://sofiaprefirma.com" + r))).status).not.toBe(404);
   expect(await (await middleware(new Request("https://sofiaprefirma.com/sitemap.xml"))).text()).toContain("<loc>https://sofiaprefirma.com/correo-notarial</loc>");
 });
+
+it("los textos legales de SOFIA PreFirma cubren el servicio de correo y usan el correo de ventas", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { TERMINOS_PREFIRMA, AVISO_PRIVACIDAD_PREFIRMA } = await import("../js/legal.js");
+  const terminos = readFileSync(new URL("../prefirma-terminos.html", import.meta.url), "utf8");
+  const privacidad = readFileSync(new URL("../prefirma-privacidad.html", import.meta.url), "utf8");
+  expect(terminos).toContain(`Versión ${TERMINOS_PREFIRMA}`);
+  expect(privacidad).toContain(`Versión ${AVISO_PRIVACIDAD_PREFIRMA}`);
+  expect(terminos).toContain("Servicio de dominio y correo para notarías");
+  expect(terminos).toContain("No somos parte del Consejo de la Judicatura");
+  expect(privacidad).toContain("datos del titular del dominio");
+  for (const t of [terminos, privacidad]) {
+    expect(t).toContain("ventas@sofiaprefirma.com");
+    expect(t).not.toContain("@gmail.com");
+  }
+});
