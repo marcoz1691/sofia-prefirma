@@ -44,10 +44,10 @@ export const AMPLIACIONES = [
 // Correo con el dominio propio de la notaría. Es la misma información de correo-notarial.html.
 // El pago anual son 10 mensualidades e incluye la instalación, igual que en los planes de Sofía.
 export const PLANES_CORREO = [
-  { nombre: "Correo del Notario", lema: "El correo del notario, con el nombre de su notaría", instalacion: 29, mensual: 12,
+  { nombre: "Correo del Notario", lema: "El correo del notario, con el nombre de su notaría", instalacion: 25, mensual: 12,
     incluye: ["El dominio notaria(número)(cantón).com, a nombre de su notaría", "El correo nombre.apellido@ del notario o la notaria",
       "Configuración antispam (SPF, DKIM y DMARC) para que sus correos no caigan en spam", "Configuración en su celular y su computadora", "Soporte por WhatsApp"] },
-  { nombre: "Correo Notaría completa", lema: "Todo su equipo con el correo de la notaría", instalacion: 29, mensual: 29,
+  { nombre: "Correo Notaría completa", lema: "Todo su equipo con el correo de la notaría", instalacion: 25, mensual: 29,
     incluye: ["Todo el plan Correo del Notario", "Hasta 10 buzones: matriceros, contacto@ y los que necesite", "Migración de los correos que hoy tiene en Gmail",
       "Altas y bajas del personal: cuando alguien se va, su correo queda en la notaría", "Firma de correo y una hora de capacitación"],
     extra: "USD 3 al mes por cada buzón adicional" },
@@ -99,7 +99,7 @@ ${ampliaciones}
 Correo con el dominio propio de la notaría (servicio aparte de los planes de Sofía):
 Muchas notarías atienden con cuentas personales de Gmail o Hotmail. SOFIA PreFirma les ofrece correos profesionales con su propio dominio, como nombre.apellido@notaria12cuenca.com: registra el dominio a nombre de la notaría, crea los correos y los administra. Preséntalo como una forma de formalizar la imagen de la notaría y de que los correos se queden en ella aunque cambie el personal. No menciones al Consejo de la Judicatura, oficios ni sistemas del Estado; si la persona pregunta, di que el formato notaria(número)(cantón).com sirve para lo que necesite y que un asesor puede ayudarle, sin afirmar que es un requisito ni que somos parte de alguna institución.
 ${correo}
-- La instalación es un pago único de USD 29 y es gratis con pago anual.
+- La instalación es un pago único de USD 25 y es gratis con pago anual.
 - Con el plan ${CORREO_INCLUIDO_DESDE} o superior de Sofía, el plan Correo del Notario va incluido, sin instalación ni mensualidad.
 - Precios más IVA. La disponibilidad del dominio y su forma exacta (cantones con varias palabras o con ñ) se confirman con la notaría antes de registrarlo.
 - La notaría puede revisar si su dominio está libre y pedir el servicio en https://sofiaprefirma.com/correo-notarial. Cuando haya interés, registra los datos con registrar_interes como en los demás casos.
