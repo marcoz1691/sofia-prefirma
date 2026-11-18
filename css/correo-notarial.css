@@ -33,7 +33,7 @@
 .ventajas h3{font-size:17px;line-height:1.25;margin:10px 0 6px}
 .ventajas p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
 
-.correo__grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.correo__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
 .correo__grid .plan{grid-column:auto;max-width:none;margin:0}
 .correo__extra{margin:-12px 0 20px;font-size:13px;color:var(--muted)}
 .correo__sofia{display:flex;gap:10px;align-items:flex-start;margin:18px 0 0;padding:16px 18px;border-radius:16px;background:var(--noche);color:rgba(255,255,255,.8);font-size:15px;line-height:1.5}
@@ -53,7 +53,8 @@
 .correo__listo p{margin:0;color:var(--muted)}
 .correo footer{padding:30px 28px 50px;text-align:center;color:var(--muted);font-size:14px}
 
-@media(max-width:860px){.ventajas{grid-template-columns:1fr 1fr}.correo__grid{grid-template-columns:1fr}}
+@media(max-width:1000px){.correo__grid{grid-template-columns:1fr;max-width:560px}}
+@media(max-width:860px){.ventajas{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){
   .buscador,.correo__pedir{padding:22px 18px!important}
   .buscador__form{grid-template-columns:1fr}

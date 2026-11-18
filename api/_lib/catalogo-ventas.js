@@ -47,10 +47,13 @@ export const PLANES_CORREO = [
   { nombre: "Correo del Notario", lema: "El correo del notario, con el nombre de su notaría", instalacion: 60, mensual: 14,
     incluye: ["El dominio notaria(número)(cantón).com, a nombre de su notaría", "El correo nombre.apellido@ del notario o la notaria",
       "Configuración antispam (SPF, DKIM y DMARC) para que sus correos no caigan en spam", "Configuración en su celular y su computadora", "Soporte por WhatsApp"] },
-  { nombre: "Correo Notaría completa", lema: "Todo su equipo con el correo de la notaría", instalacion: 60, mensual: 40,
+  { nombre: "Correo Notaría completa", lema: "Todo su equipo con el correo de la notaría", instalacion: 60, mensual: 49,
     incluye: ["Todo el plan Correo del Notario", "Hasta 10 buzones: matriceros, contacto@ y los que necesite", "Migración de los correos que hoy tiene en Gmail",
       "Altas y bajas del personal: cuando alguien se va, su correo queda en la notaría", "Firma de correo y una hora de capacitación"],
     extra: "USD 3,50 al mes por cada buzón adicional" },
+  { nombre: "Página web + correo", lema: "Su notaría en internet, con su propio correo", instalacion: 60, mensual: 39,
+    incluye: ["Página web con la marca de su notaría", "Catálogo de trámites con requisitos y calculadora de tarifas", "El correo nombre.apellido@ del notario o la notaria, con su dominio", "Configuración antispam y en su celular y su computadora", "Soporte por WhatsApp"],
+    extra: "No incluye al asistente Sofía: para que atienda a sus clientes por WhatsApp, el plan PreFirma incluye el correo sin costo" },
 ];
 export const CORREO_INCLUIDO_DESDE = "PreFirma";
 

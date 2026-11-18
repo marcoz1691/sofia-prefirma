@@ -60,7 +60,7 @@ it("el pedido de correo se registra con el dominio y avisa al asesor", async () 
 });
 
 it("Sofía conoce los planes de correo y no menciona al Consejo de la Judicatura", () => {
-  expect(PLANES_CORREO.map((p) => [p.nombre, p.instalacion, p.mensual])).toEqual([["Correo del Notario", 60, 14], ["Correo Notaría completa", 60, 40]]);
+  expect(PLANES_CORREO.map((p) => [p.nombre, p.instalacion, p.mensual])).toEqual([["Correo del Notario", 60, 14], ["Correo Notaría completa", 60, 49], ["Página web + correo", 60, 39]]);
   const s = sistemaVentas();
   expect(s).toContain("Correo del Notario (El correo del notario, con el nombre de su notaría): instalación USD 60 (pago único, gratis con pago anual) y USD 14 al mes, o USD 140 al año");
   expect(s).toContain("No menciones al Consejo de la Judicatura");
