@@ -11,6 +11,7 @@ test("la notaría revisa si su dominio está libre y pide su correo", async ({ p
   await page.goto("/correo-notarial.html");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Un correo con el nombre de su notaría");
   await expect(page.getByText(/Consejo|oficio|SISTELNOT/)).toHaveCount(0);
+  await expect(page.locator(".correo__desde")).toContainText("Desde USD 14 al mes, IVA incluido");
   await page.getByLabel("Número de su notaría").fill("12");
   await page.getByLabel("Cantón").fill("Cuenca");
   await expect(page.locator("#b-correo")).toHaveText("nombre.apellido@notaria12cuenca.com");
@@ -18,8 +19,8 @@ test("la notaría revisa si su dominio está libre y pide su correo", async ({ p
   await expect(page.locator("#b-resultado")).toContainText("notaria12cuenca.com está libre");
   await expect(page.locator("#p-notaria")).toHaveValue("Notaría 12 de Cuenca");
 
-  await page.locator('[data-elegir="Correo Notaría completa"]').click();
-  await expect(page.getByLabel("Plan")).toHaveValue("Correo Notaría completa");
+  await page.locator('[data-elegir="Correo del Equipo"]').click();
+  await expect(page.getByLabel("Plan")).toHaveValue("Correo del Equipo");
   await page.getByLabel("Su nombre").fill("Ana Ruiz");
   await page.getByLabel("Celular (WhatsApp)").fill("0987654321");
   await page.getByRole("button", { name: "Pedir mi correo" }).click();
@@ -28,7 +29,7 @@ test("la notaría revisa si su dominio está libre y pide su correo", async ({ p
   await page.getByRole("checkbox", { name: /tratamiento de mis datos/ }).check();
   await page.getByRole("button", { name: "Pedir mi correo" }).click();
   await expect(page.locator("#p-listo")).toContainText("Recibimos su pedido");
-  expect(cuerpos.at(-1)).toMatchObject({ accion: "solicitar", plan: "Correo Notaría completa", dominio: "notaria12cuenca.com", ciudad: "Cuenca",
+  expect(cuerpos.at(-1)).toMatchObject({ accion: "solicitar", plan: "Correo del Equipo", dominio: "notaria12cuenca.com", ciudad: "Cuenca",
     notaria: "Notaría 12 de Cuenca", aceptaTerminos: true, aceptaDatos: true });
 });
 
