@@ -33,6 +33,9 @@
 .ventajas h3{font-size:17px;line-height:1.25;margin:10px 0 6px}
 .ventajas p{margin:0;font-size:14px;color:var(--muted);line-height:1.5}
 
+.diferencia{margin-bottom:64px}
+.diferencia .ventajas{margin-bottom:0}
+.correo__acciones{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .correo__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
 .correo__grid .plan{grid-column:auto;max-width:none;margin:0}
 .correo__extra{margin:-12px 0 20px;font-size:13px;color:var(--muted)}
@@ -64,4 +67,5 @@
   .ventajas{grid-template-columns:1fr}
   .correo .eleccion__campos{grid-template-columns:1fr}
   .correo__pedir .boton{justify-self:stretch}
+  .correo__acciones .boton{width:100%}
 }
