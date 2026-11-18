@@ -25,13 +25,13 @@ const SIN_PAGO = "El pago en línea todavía no está disponible. Un asesor te e
 
 export function crearManejadorVentas({ agente, almacen, avisar = async () => {}, proveedor = null, ahora = () => Date.now(), limites = LIMITES,
   consultarDominio = consultarRdap }) {
-  // «¿Está libre tu dominio?» de correo-notarial.html: arma el dominio del oficio del Consejo y pregunta al registro .com.
+  // «¿Está libre el dominio de su notaría?» de correo-notarial.html: arma notaria(número)(cantón).com y pregunta al registro .com.
   async function dominio(b, request) {
     const d = armarDominio(b.numero, b.canton);
-    if (!d) return json({ error: "Escribe el número de tu notaría y tu cantón." }, 400);
+    if (!d) return json({ error: "Escriba el número de su notaría y su cantón." }, 400);
     const t = ahora();
     const [nIp, nDia] = await Promise.all([almacen.contarUso("ventas:dominio:ip:" + huellaIp(request), HORA, t), almacen.contarUso("ventas:dominio:dia", DIA, t)]);
-    if (nIp > 30 || nDia > 2000) return json({ error: "Hiciste muchas consultas seguidas. Inténtalo en un rato." }, 429);
+    if (nIp > 30 || nDia > 2000) return json({ error: "Hizo muchas consultas seguidas. Inténtelo en un rato." }, 429);
     const estado = await consultarDominio(d);
     await registrar(almacen, "ventas.dominio_consultado", 1, t);
     return json({ dominio: d, correo: "nombre.apellido@" + d, estado });
