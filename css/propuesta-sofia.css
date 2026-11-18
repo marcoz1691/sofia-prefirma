@@ -250,3 +250,17 @@ section:not(.hero){padding:7mm 3mm;break-inside:avoid}
 /* Frases del título: con «Reducir movimiento» solo se desvanecen; al imprimir queda la principal */
 @media(prefers-reduced-motion:reduce){.hero__rota>span:not(.activa){transform:none}}
 @media print{.hero__rota>span{opacity:0!important}.hero__rota>span:first-child{opacity:1!important;transform:none}}
+
+/* Menú hamburguesa: la navegación se oculta bajo 960px y se abre desde el botón */
+.topbar__burger{display:none;align-items:center;justify-content:center;width:42px;height:42px;margin-left:10px;border:1px solid rgba(255,255,255,.3);border-radius:99px;background:transparent;color:#fff;font-size:22px;cursor:pointer}
+.topbar__burger:focus-visible{outline:2px solid var(--menta);outline-offset:3px}
+@media(max-width:960px){
+.topbar__burger{display:inline-flex}
+.topbar__cta{margin-left:auto}
+.topbar nav{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;margin:0;padding:8px 20px 16px;background:var(--noche);border-bottom:1px solid rgba(255,255,255,.14);font-size:16px;color:#fff}
+.topbar.abierto nav{display:flex}
+.topbar nav a{padding:14px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+.topbar nav a:last-child{border-bottom:0}
+}
+@media(max-width:620px){.topbar__cta{padding:8px 12px}}
+@media print{.topbar__burger{display:none!important}}

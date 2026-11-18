@@ -178,3 +178,22 @@ formEleccion?.addEventListener("submit", async (evento) => {
   }
 });
 mostrarPeriodo("mensual");
+
+// Menú hamburguesa (móvil): abre/cierra la navegación y se cierra al elegir un enlace, con Escape o al tocar fuera.
+(() => {
+  const barra = document.querySelector(".topbar");
+  const boton = document.getElementById("burger");
+  if (!barra || !boton) return;
+  const poner = abierto => {
+    barra.classList.toggle("abierto", abierto);
+    boton.setAttribute("aria-expanded", String(abierto));
+    boton.setAttribute("aria-label", abierto ? "Cerrar menú" : "Abrir menú");
+    boton.firstElementChild?.classList.toggle("ph-list", !abierto);
+    boton.firstElementChild?.classList.toggle("ph-x", abierto);
+  };
+  boton.addEventListener("click", () => poner(!barra.classList.contains("abierto")));
+  barra.querySelectorAll("nav a").forEach(a => a.addEventListener("click", () => poner(false)));
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && barra.classList.contains("abierto")) { poner(false); boton.focus(); } });
+  document.addEventListener("click", e => { if (!barra.contains(e.target)) poner(false); });
+  matchMedia("(min-width:961px)").addEventListener("change", e => { if (e.matches) poner(false); });
+})();
