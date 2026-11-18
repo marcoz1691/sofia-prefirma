@@ -3,5 +3,5 @@
 export const AVISO_PRIVACIDAD = "2026-10-16";
 export const TERMINOS = "2026-10-16";
 // Textos de SOFIA PreFirma (sitio comercial): prefirma-privacidad.html y prefirma-terminos.html.
-export const AVISO_PRIVACIDAD_PREFIRMA = "prefirma-2026-10-23";
-export const TERMINOS_PREFIRMA = "prefirma-2026-10-23";
+export const AVISO_PRIVACIDAD_PREFIRMA = "prefirma-2026-11-18";
+export const TERMINOS_PREFIRMA = "prefirma-2026-11-18";
