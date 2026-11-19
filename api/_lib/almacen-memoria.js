@@ -188,8 +188,19 @@ export function crearAlmacenMemoria({ personal = [], codigo = nuevoCodigo } = {}
     async registrarConsentimiento(c) { consentimientos.push(copia(c)); },
     async consentimientos() { return copia(consentimientos); },
     // Interesados que registra el chat de ventas de SOFIA PreFirma.
-    async guardarProspecto(p) { prospectos.push({ id: nuevoId(), creado: new Date().toISOString(), ...copia(p) }); },
+    async guardarProspecto(p) {
+      const fila = { id: nuevoId(), creado: new Date().toISOString(), etapa: "nuevo", contrato: "no_enviado", pago: "pendiente", firmadoEn: null, valorMensual: null,
+        proximoPaso: "", proximoEn: null, notas: "", actualizado: null, actualizadoPor: "", ...copia(p) };
+      prospectos.push(fila);
+      return copia(fila);
+    },
     async prospectos() { return copia(prospectos).reverse(); },
+    async actualizarProspecto(id, cambios) {
+      const fila = prospectos.find((x) => x.id === String(id));
+      if (!fila) return null;
+      Object.assign(fila, copia(cambios));
+      return copia(fila);
+    },
     // Turnero: el número es correlativo por día.
     async crearTurno(t) {
       const numero = Math.max(0, ...filaTurnos.filter((x) => x.fecha === t.fecha).map((x) => x.numero)) + 1;

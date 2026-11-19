@@ -638,3 +638,24 @@ revoke all on turnos from anon, authenticated;
 alter table consentimientos drop constraint if exists consentimientos_canal_check;
 alter table consentimientos add constraint consentimientos_canal_check check (canal in ('formulario', 'chat-web', 'whatsapp', 'documentos', 'portal',
   'chat-ventas', 'formulario-ventas', 'pago-plan', 'turnero'));
+
+-- 2026-11-19: seguimiento de prospectos de SOFIA PreFirma (tablero en sofiaprefirma.com/ventas/). Ejecuta este bloque antes
+-- de desplegar /api/prospectos. Solo agrega columnas: los pedidos que ya existen quedan en la etapa «nuevo».
+alter table prospectos add column if not exists etapa text not null default 'nuevo';
+alter table prospectos add column if not exists contrato text not null default 'no_enviado';
+alter table prospectos add column if not exists pago text not null default 'pendiente';
+alter table prospectos add column if not exists firmado_en date;
+alter table prospectos add column if not exists valor_mensual numeric(10,2);
+alter table prospectos add column if not exists proximo_paso text not null default '';
+alter table prospectos add column if not exists proximo_en date;
+alter table prospectos add column if not exists notas text not null default '';
+alter table prospectos add column if not exists actualizado timestamptz;
+alter table prospectos add column if not exists actualizado_por text not null default '';
+alter table prospectos drop constraint if exists prospectos_etapa_check;
+alter table prospectos add constraint prospectos_etapa_check check (etapa in ('nuevo', 'contactado', 'demostracion', 'propuesta', 'ganado', 'perdido'));
+alter table prospectos drop constraint if exists prospectos_contrato_check;
+alter table prospectos add constraint prospectos_contrato_check check (contrato in ('no_enviado', 'enviado', 'firmado'));
+alter table prospectos drop constraint if exists prospectos_pago_check;
+alter table prospectos add constraint prospectos_pago_check check (pago in ('pendiente', 'pagado'));
+alter table prospectos drop constraint if exists prospectos_valor_check;
+alter table prospectos add constraint prospectos_valor_check check (valor_mensual is null or (valor_mensual >= 0 and valor_mensual <= 100000));

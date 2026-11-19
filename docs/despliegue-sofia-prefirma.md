@@ -75,6 +75,15 @@ Antes de desplegarlo en el proyecto `sofiaprefirma`:
 3. Configura en el proyecto comercial: `ANTHROPIC_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NOTARIA_ID=sofia-ventas`, `HUELLA_IP_SECRETO` (32 bytes o más), `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `AVISOS_WHATSAPP=593983207754` (recibe cada interesado) y `VENTAS_WHATSAPP=593983207754` (Sofía ofrece hablar con una persona por ese número). Opcional: `VENTAS_EFFORT` (por defecto `low`).
 4. Pendiente: el proyecto comercial no tiene cron jobs, así que la purga de 90 días que promete el aviso de privacidad todavía no corre para `sofia-ventas`. Prográmala antes de abrir el chat al público.
 
+## Tablero de prospectos
+
+`sofiaprefirma.com/ventas/` (`ventas/index.html`, `js/ventas.js`, `api/prospectos.js`) muestra la tabla `prospectos` del tenant `sofia-ventas` para dar seguimiento: etapa, contrato (no enviado, enviado, firmado), pago, valor mensual, próximo paso y notas internas. Todo se edita en la misma tabla y cada cambio queda en la auditoría. Al marcar un contrato como firmado se guarda la fecha y el prospecto pasa a «ganado». Es independiente del panel de la Notaría 41: `/panel/` sigue cerrado en el sitio comercial y `/api/prospectos` responde 404 fuera del tenant de ventas.
+
+- Hecho el 2026-11-19: el bloque «2026-11-19: seguimiento de prospectos de SOFIA PreFirma» de `supabase/esquema.sql` está aplicado.
+- Acceso: la persona debe estar en `personal` con `notaria_id = 'sofia-ventas'`, tener el correo confirmado y la verificación en dos pasos. Hoy tienen acceso `marcoz1691@gmail.com` (admin) y `caroalbornozm@gmail.com`. En producción los perfiles válidos son `admin`, `notario` y `matricero`; en el tablero todos ven y editan lo mismo.
+- «¿Olvidaste tu contraseña?» envía un enlace que vuelve a `/ventas/`. Para que Supabase lo acepte, agrega `https://sofiaprefirma.com/ventas/` en Authentication → URL Configuration → Redirect URLs. Si falta, el enlace lleva al panel de la notaría.
+- Variables necesarias además de las del chat: `SUPABASE_ANON_KEY`.
+
 ## Pagos en línea con PagoMedios
 
 La pasarela es PagoMedios (Abitmedia, API v2: `https://api.abitmedia.cloud/pagomedios/v2/payment-requests`, autenticación `Bearer`). Se usa en dos lugares:
