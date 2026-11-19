@@ -51,11 +51,20 @@ export function decidir(url, funciones) {
   const u = new URL(url);
   return RUTAS_CON_INTERRUPTOR.has(u.pathname) && funciones?.sitio === false ? new URL("/mantenimiento.html", u).href : null;
 }
+// Panel interno de ventas (prospectos) y lo que necesita para cargar: no se indexa.
+export function esPanelComercial(ruta) {
+  return ruta === "/panel" || ruta.startsWith("/panel/")
+    || ruta === "/css/panel.css"
+    || ruta === "/js/nucleo.js"
+    || ruta === "/assets/favicon.svg"
+    || ruta.startsWith("/assets/logo/");
+}
+
 export default async function middleware(request) {
   const ruta = new URL(request.url).pathname;
   if (esVitrinaComercial(request.url)) {
-    // La única API del sitio comercial es el chat de ventas, que trabaja en su propio tenant (api/ventas.js).
-    if (ruta === "/api/ventas") return next();
+    // Ventas: chat/pedido público; panel y su configuración para ver prospectos.
+    if (ruta === "/api/ventas" || ruta === "/api/panel" || ruta === "/api/panel-config") return next();
     if (ruta === "/api" || ruta.startsWith("/api/")) {
       return Response.json({ error: "Esta ruta no está disponible en el sitio comercial." }, {
         status: 404,
@@ -69,7 +78,8 @@ export default async function middleware(request) {
     }
     if (ruta === "/" || ruta === "/propuesta") return rewrite(new URL("/propuesta-sofia.html", request.url));
     if (ruta === "/correo-notarial") return rewrite(new URL("/correo-notarial.html", request.url));
-    if (RECURSOS_COMERCIALES.has(ruta) || ruta.startsWith("/assets/fonts/")) return next();
+    if (ruta === "/panel") return rewrite(new URL("/panel/", request.url));
+    if (RECURSOS_COMERCIALES.has(ruta) || ruta.startsWith("/assets/fonts/") || esPanelComercial(ruta)) return next();
     return new Response("Página no encontrada.", {
       status: 404,
       headers: { "Cache-Control": "no-store", "Content-Type": "text/plain; charset=utf-8" },

@@ -158,7 +158,12 @@ async function mostrarApp() {
     const ventas = yo.producto === "ventas";
     $("[data-tab=prospectosV]").hidden = !ventas;
     for (const pestana of ["agendaV", "preciosV", "filaV"]) { const boton = document.querySelector(`[data-tab=${pestana}]`); if (boton) boton.hidden = ventas; }
-    if (ventas && !["app", "prospectosV", "metricasV", "equipoV", "funcionesV"].includes(pestanaActual)) pestanaActual = "app";
+    if (ventas) {
+      document.title = "Panel · SOFIA PreFirma";
+      const marca = document.querySelector("header b");
+      if (marca) marca.textContent = "Panel · SOFIA PreFirma";
+      if (!["app", "prospectosV", "metricasV", "equipoV", "funcionesV"].includes(pestanaActual)) pestanaActual = "prospectosV";
+    }
     $("[data-tab=metricasV]").hidden = rolSesion !== "admin";
     $("[data-tab=equipoV]").hidden = !["admin", "notario"].includes(rolSesion);
     if ((["funcionesV", "metricasV"].includes(pestanaActual) && rolSesion !== "admin") || (pestanaActual === "equipoV" && !["admin", "notario"].includes(rolSesion))) pestanaActual = "app";
