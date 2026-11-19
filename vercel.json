@@ -158,6 +158,15 @@
       ]
     },
     {
+      "source": "/ventas/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
       "source": "/assets/fonts/(.*)\\.woff2",
       "headers": [
         {

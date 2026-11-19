@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Prospectos · SOFIA PreFirma</title>
+<link rel="icon" href="/assets/logo/sofia-prefirma-oficial-simbolo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/ventas.css">
+</head>
+<body>
+<header class="barra">
+  <img src="/assets/logo/sofia-prefirma-oficial-blanco.svg" alt="SOFIA PreFirma" width="94" height="34">
+  <span class="barra__titulo">Prospectos</span>
+  <span class="sp"></span>
+  <span class="barra__quien" id="quien" hidden></span>
+  <button class="boton boton--fantasma" id="salir" type="button" hidden>Salir</button>
+</header>
+
+<p class="cargando" id="cargando" role="status">Cargando el tablero…</p>
+
+<main class="acceso" id="acceso" hidden>
+  <form class="tarjeta-acceso" id="vEntrar" data-vista novalidate>
+    <h1>Tablero de ventas</h1>
+    <p>Ingresa con tu cuenta de SOFIA PreFirma.</p>
+    <label>Correo<input id="email" type="email" autocomplete="username" required></label>
+    <label>Contraseña<input id="clave" type="password" autocomplete="current-password" required></label>
+    <p class="mensaje" id="mEntrar" role="alert"></p>
+    <button class="boton" type="submit">Entrar</button>
+  </form>
+  <form class="tarjeta-acceso" id="vMfaCodigo" data-vista hidden novalidate>
+    <h1>Verificación en dos pasos</h1>
+    <p>Escribe el código de 6 dígitos de tu app de verificación.</p>
+    <label>Código<input id="mfaCodigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required></label>
+    <p class="mensaje" id="mMfaCodigo" role="alert"></p>
+    <button class="boton" type="submit">Verificar</button>
+  </form>
+  <form class="tarjeta-acceso" id="vMfaAlta" data-vista hidden novalidate>
+    <h1>Activa la verificación en dos pasos</h1>
+    <p>Escanea el código con Google Authenticator, Microsoft Authenticator o similar y escribe el código que te muestra.</p>
+    <img id="mfaQr" alt="Código QR para la app de verificación" width="180" height="180">
+    <p class="clave-mfa">Clave manual: <code id="mfaClave"></code></p>
+    <label>Código<input id="mfaCodigoAlta" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required></label>
+    <p class="mensaje" id="mMfaAlta" role="alert"></p>
+    <button class="boton" type="submit">Activar</button>
+  </form>
+</main>
+
+<main class="tablero" id="tablero" hidden>
+  <section class="kpis" id="kpis" aria-label="Resumen"></section>
+
+  <nav class="etapas" id="etapas" aria-label="Filtrar por etapa"></nav>
+
+  <div class="herramientas">
+    <label class="buscar"><span class="oculto">Buscar</span><input id="buscar" type="search" placeholder="Buscar por nombre, notaría, ciudad, teléfono o plan"></label>
+    <label class="filtro">Contrato<select id="fContrato"><option value="">Todos</option><option value="no_enviado">No enviado</option><option value="enviado">Enviado</option><option value="firmado">Firmado</option></select></label>
+    <label class="check"><input id="fVencidos" type="checkbox"> Seguimiento vencido</label>
+    <span class="sp"></span>
+    <span class="actualizado" id="actualizado" aria-live="polite"></span>
+    <button class="boton boton--linea" id="exportar" type="button">Exportar CSV</button>
+    <button class="boton" id="agregar" type="button">Agregar prospecto</button>
+  </div>
+
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead><tr>
+        <th><button type="button" data-orden="creado">Fecha</button></th>
+        <th><button type="button" data-orden="nombre">Cliente</button></th>
+        <th>Contacto</th>
+        <th><button type="button" data-orden="plan">Plan</button></th>
+        <th><button type="button" data-orden="etapa">Etapa</button></th>
+        <th><button type="button" data-orden="contrato">Contrato</button></th>
+        <th><button type="button" data-orden="pago">Pago</button></th>
+        <th><button type="button" data-orden="valor">Valor / mes</button></th>
+        <th><button type="button" data-orden="proximoEn">Seguimiento</button></th>
+        <th><span class="oculto">Notas</span></th>
+      </tr></thead>
+      <tbody id="filas"></tbody>
+    </table>
+    <p class="vacio" id="vacio" hidden>No hay prospectos con estos filtros.</p>
+  </div>
+  <datalist id="planesLista"></datalist>
+</main>
+
+<dialog id="dNuevo" aria-labelledby="dNuevoTitulo">
+  <form id="fNuevo" method="dialog" novalidate>
+    <h2 id="dNuevoTitulo">Agregar prospecto</h2>
+    <div class="rejilla">
+      <label>Nombre<input name="nombre" required maxlength="80"></label>
+      <label>Cargo<input name="cargo" maxlength="60" placeholder="Notario, personal…"></label>
+      <label>Notaría<input name="notaria" maxlength="120" placeholder="Notaría 12 de Cuenca"></label>
+      <label>Ciudad<input name="ciudad" maxlength="60"></label>
+      <label>Celular<input name="telefono" type="tel" maxlength="30"></label>
+      <label>Correo<input name="correo" type="email" maxlength="200"></label>
+      <label>Plan<input name="plan" list="planesLista" maxlength="40"></label>
+      <label>Motivo<select name="motivo"><option value="cotizacion">Cotización</option><option value="demostracion">Demostración</option><option value="contratar">Contratar</option><option value="asesor">Hablar con asesor</option><option value="soporte">Soporte</option></select></label>
+    </div>
+    <label>Detalle<textarea name="detalle" rows="2" maxlength="500" placeholder="Cómo llegó, qué necesita…"></textarea></label>
+    <p class="mensaje" id="mNuevo" role="alert"></p>
+    <div class="acciones"><button class="boton boton--linea" type="button" id="cancelarNuevo">Cancelar</button><button class="boton" type="submit">Guardar</button></div>
+  </form>
+</dialog>
+
+<p class="aviso" id="aviso" role="status" aria-live="polite"></p>
+
+<script src="/panel/vendor/supabase-js-2.117.2.js"></script>
+<script type="module" src="/js/ventas.js"></script>
+</body>
+</html>

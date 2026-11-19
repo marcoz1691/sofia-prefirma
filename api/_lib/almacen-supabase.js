@@ -15,6 +15,14 @@ const pagoPlanDe = (r) => r ? { id: r.id, plan: r.plan, periodo: r.periodo, base
   moneda: r.moneda, proveedor: r.proveedor, ordenProveedor: r.orden_proveedor, estado: r.estado, nombre: r.nombre, notaria: r.notaria, telefono: r.telefono, correo: r.correo,
   documento: r.documento, creado: r.creado, pagadoEn: r.pagado_en } : null;
 
+const COLUMNAS_PROSPECTO = { etapa: "etapa", contrato: "contrato", pago: "pago", firmadoEn: "firmado_en", valorMensual: "valor_mensual",
+  proximoPaso: "proximo_paso", proximoEn: "proximo_en", notas: "notas", plan: "plan", actualizado: "actualizado", actualizadoPor: "actualizado_por" };
+const prospectoDe = (r) => ({ id: String(r.id), conversacionId: r.conversacion_id, nombre: r.nombre, notaria: r.notaria, ciudad: r.ciudad, cargo: r.cargo,
+  telefono: r.telefono, correo: r.correo, plan: r.plan, motivo: r.motivo, detalle: r.detalle, creado: r.creado,
+  etapa: r.etapa || "nuevo", contrato: r.contrato || "no_enviado", pago: r.pago || "pendiente", firmadoEn: r.firmado_en || null,
+  valorMensual: r.valor_mensual == null ? null : Number(r.valor_mensual), proximoPaso: r.proximo_paso || "", proximoEn: r.proximo_en || null,
+  notas: r.notas || "", actualizado: r.actualizado || null, actualizadoPor: r.actualizado_por || "" });
+
 export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo, notariaId = NOTARIA_POR_DEFECTO } = {}) {
   const db = cliente || createClient(url, clave, { auth: { persistSession: false } });
   const notaria = exigirNotaria(notariaId);
@@ -253,9 +261,9 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
     // del día siguiente no repite el mismo error.
     async registrarConsentimiento(c) { ok(await db.from("consentimientos").insert({ ...c, notaria_id: notaria })); },
     async guardarProspecto(p) {
-      ok(await db.from("prospectos").insert({ notaria_id: notaria, conversacion_id: p.conversacionId, nombre: p.nombre, notaria: p.notaria || "",
+      return prospectoDe(ok(await db.from("prospectos").insert({ notaria_id: notaria, conversacion_id: p.conversacionId, nombre: p.nombre, notaria: p.notaria || "",
         ciudad: p.ciudad || "", cargo: p.cargo || "", telefono: p.telefono || "", correo: p.correo || "", plan: p.plan || "",
-        motivo: p.motivo, detalle: p.detalle || "" }));
+        motivo: p.motivo, detalle: p.detalle || "" }).select("*").single()));
     },
     async crearTurno(t) {
       for (let intento = 0; intento < 4; intento++) {
@@ -293,9 +301,12 @@ export function crearAlmacenSupabase({ url, clave, cliente, codigo = nuevoCodigo
       return ok(await q.select("id")).length > 0;
     },
     async prospectos() {
-      return ok(await db.from("prospectos").select("*").eq("notaria_id", notaria).order("creado", { ascending: false }).limit(500))
-        .map((r) => ({ id: String(r.id), conversacionId: r.conversacion_id, nombre: r.nombre, notaria: r.notaria, ciudad: r.ciudad, cargo: r.cargo,
-          telefono: r.telefono, correo: r.correo, plan: r.plan, motivo: r.motivo, detalle: r.detalle, creado: r.creado }));
+      return ok(await db.from("prospectos").select("*").eq("notaria_id", notaria).order("creado", { ascending: false }).limit(500)).map(prospectoDe);
+    },
+    async actualizarProspecto(id, cambios) {
+      const fila = {};
+      for (const [k, columna] of Object.entries(COLUMNAS_PROSPECTO)) if (k in cambios) fila[columna] = cambios[k];
+      return ok(await db.from("prospectos").update(fila).eq("notaria_id", notaria).eq("id", id).select("*")).map(prospectoDe)[0] || null;
     },
     async purgar({ inactivasAntesDe, borradosAntesDe, hoy }) {
       const LOTE = 50, LOTES = 4, corte = new Date(inactivasAntesDe).toISOString();

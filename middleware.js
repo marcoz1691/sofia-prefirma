@@ -21,6 +21,11 @@ const RECURSOS_COMERCIALES = new Set([
   "/prefirma-privacidad.html",
   "/prefirma-terminos.html",
   "/robots.txt",
+  "/ventas/",
+  "/ventas/index.html",
+  "/css/ventas.css",
+  "/js/ventas.js",
+  "/panel/vendor/supabase-js-2.117.2.js",
 ]);
 export const config = { matcher: ["/:path*"] };
 
@@ -54,8 +59,8 @@ export function decidir(url, funciones) {
 export default async function middleware(request) {
   const ruta = new URL(request.url).pathname;
   if (esVitrinaComercial(request.url)) {
-    // La única API del sitio comercial es el chat de ventas, que trabaja en su propio tenant (api/ventas.js).
-    if (ruta === "/api/ventas") return next();
+    // Las API del sitio comercial trabajan en su propio tenant: el chat de ventas y el tablero de prospectos.
+    if (ruta === "/api/ventas" || ruta === "/api/prospectos") return next();
     if (ruta === "/api" || ruta.startsWith("/api/")) {
       return Response.json({ error: "Esta ruta no está disponible en el sitio comercial." }, {
         status: 404,
@@ -69,6 +74,7 @@ export default async function middleware(request) {
     }
     if (ruta === "/" || ruta === "/propuesta") return rewrite(new URL("/propuesta-sofia.html", request.url));
     if (ruta === "/correo-notarial") return rewrite(new URL("/correo-notarial.html", request.url));
+    if (ruta === "/ventas") return Response.redirect(new URL("/ventas/", request.url), 308);
     if (RECURSOS_COMERCIALES.has(ruta) || ruta.startsWith("/assets/fonts/")) return next();
     return new Response("Página no encontrada.", {
       status: 404,
