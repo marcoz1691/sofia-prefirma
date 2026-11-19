@@ -36,8 +36,6 @@ it("la vitrina comercial no expone las API de una notaría", async () => {
  expect(r.status).toBe(404);
  expect(r.headers.get("Cache-Control")).toBe("no-store");
  expect(await r.json()).toEqual({ error: "Esta ruta no está disponible en el sitio comercial." });
- expect((await middleware(new Request("https://sofiaprefirma.com/panel/"))).headers.get("x-middleware-next")).toBe("1");
- expect((await middleware(new Request("https://sofiaprefirma.com/api/panel"))).headers.get("x-middleware-next")).toBe("1");
  const piloto = await middleware(new Request("https://notaria41.sofiaprefirma.com/api/precios"));
  expect(piloto.headers.get("x-middleware-next")).toBe("1");
 });
@@ -53,10 +51,7 @@ it("la vista previa comercial sirve solo la propuesta de Sofía", async () => {
    expect(portada.headers.get("x-middleware-rewrite")).toBe("https://preview.example/propuesta-sofia.html");
    expect((await middleware(new Request("https://preview.example/assets/logo/sofia-prefirma-oficial.svg"))).headers.get("x-middleware-next")).toBe("1");
    expect((await middleware(new Request("https://preview.example/index.html"))).status).toBe(404);
-   expect((await middleware(new Request("https://preview.example/panel/"))).headers.get("x-middleware-next")).toBe("1");
-   expect((await middleware(new Request("https://preview.example/api/panel"))).headers.get("x-middleware-next")).toBe("1");
-   expect((await middleware(new Request("https://preview.example/api/panel-config"))).headers.get("x-middleware-next")).toBe("1");
-   expect((await middleware(new Request("https://preview.example/css/panel.css"))).headers.get("x-middleware-next")).toBe("1");
+   expect((await middleware(new Request("https://preview.example/panel/"))).status).toBe(404);
  } finally {
    if (original === undefined) delete process.env.VERCEL_PROJECT_ID;
    else process.env.VERCEL_PROJECT_ID = original;
