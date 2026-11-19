@@ -33,6 +33,7 @@ a{color:var(--verde)}
 .tarjeta-acceso input,dialog input,dialog select,dialog textarea{border:1px solid var(--linea);border-radius:10px;padding:10px 12px;background:#fff;font-weight:400;font-size:15px}
 .tarjeta-acceso img{justify-self:center}
 .clave-mfa{font-size:13px;word-break:break-all}
+.enlace{border:0;background:none;padding:4px;color:var(--verde);font-size:14px;font-weight:600;justify-self:center;text-decoration:underline;text-underline-offset:3px}
 .mensaje{margin:0;color:var(--mal);font-size:14px}
 .mensaje:empty{display:none}
 

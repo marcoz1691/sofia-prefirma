@@ -27,7 +27,34 @@
     <label>Contraseña<input id="clave" type="password" autocomplete="current-password" required></label>
     <p class="mensaje" id="mEntrar" role="alert"></p>
     <button class="boton" type="submit">Entrar</button>
+    <button class="enlace" type="button" data-ir="vRecuperar">¿Olvidaste tu contraseña?</button>
   </form>
+  <form class="tarjeta-acceso" id="vRecuperar" data-vista hidden novalidate>
+    <h1>Recupera tu contraseña</h1>
+    <p>Te enviaremos un enlace a tu correo para crear una nueva.</p>
+    <label>Correo<input id="emailRec" type="email" autocomplete="username" required></label>
+    <p class="mensaje" id="mRecuperar" role="alert"></p>
+    <button class="boton" type="submit">Enviar enlace</button>
+    <button class="enlace" type="button" data-ir="vEntrar">Volver a iniciar sesión</button>
+  </form>
+  <div class="tarjeta-acceso" id="vEnviado" data-vista hidden>
+    <h1>Revisa tu correo</h1>
+    <p>Si <b id="emailEnviado"></b> tiene acceso al tablero, te llegará un enlace en unos minutos. Revisa también la carpeta de spam.</p>
+    <button class="enlace" type="button" data-ir="vEntrar">Volver a iniciar sesión</button>
+  </div>
+  <form class="tarjeta-acceso" id="vDefinir" data-vista hidden novalidate>
+    <h1>Crea una nueva contraseña</h1>
+    <p>Para <b id="cuentaDefinir"></b>. Usa al menos 8 caracteres.</p>
+    <label>Nueva contraseña<input id="clave1" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Repítela<input id="clave2" type="password" autocomplete="new-password" minlength="8" required></label>
+    <p class="mensaje" id="mDefinir" role="alert"></p>
+    <button class="boton" type="submit">Guardar y entrar</button>
+  </form>
+  <div class="tarjeta-acceso" id="vVencido" data-vista hidden>
+    <h1>El enlace ya no sirve</h1>
+    <p>Venció o ya se usó. Pide uno nuevo.</p>
+    <button class="boton" type="button" data-ir="vRecuperar">Pedir otro enlace</button>
+  </div>
   <form class="tarjeta-acceso" id="vMfaCodigo" data-vista hidden novalidate>
     <h1>Verificación en dos pasos</h1>
     <p>Escribe el código de 6 dígitos de tu app de verificación.</p>

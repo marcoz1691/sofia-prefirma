@@ -9,7 +9,7 @@ const CERRADAS = ["ganado", "perdido"];
 const REFRESCO_MS = 60 * 1000;
 const TRADUCCION = { "Invalid login credentials": "Correo o contraseña incorrectos.", "Email not confirmed": "Tu correo aún no está confirmado.",
   "Invalid TOTP code entered": "El código no es correcto. Revisa la hora de tu celular y vuelve a intentar." };
-const traducir = (m) => TRADUCCION[m] || m || "Algo salió mal. Intenta de nuevo.";
+const traducir = (m) => /rate limit/i.test(m || "") ? "Pediste varios enlaces seguidos. Espera unos minutos y vuelve a intentar." : TRADUCCION[m] || m || "Algo salió mal. Intenta de nuevo.";
 const dinero = (n) => new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n || 0);
 const hoy = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Guayaquil" }).format(new Date());
 const fechaCorta = (iso) => iso ? new Date(iso).toLocaleDateString("es-EC", { day: "2-digit", month: "short", year: "2-digit", timeZone: "America/Guayaquil" }) : "";
@@ -18,6 +18,11 @@ let datos = [], planes = [], ultimaCarga = 0, timer = null;
 const filtros = { etapa: "", contrato: "", q: "", vencidos: false, kpi: "" };
 const orden = { campo: "creado", dir: -1 };
 const abiertos = new Set();
+
+const enlace = new URLSearchParams(location.hash.slice(1) + "&" + location.search.slice(1));
+const tipoEnlace = enlace.get("type");
+const errorEnlace = enlace.get("error_code") || enlace.get("error");
+let definirPendiente = false;
 
 const cfg = await fetch("/api/prospectos?accion=config").then((r) => r.ok ? r.json() : null).catch(() => null);
 if (!cfg?.supabaseUrl || !cfg?.supabaseAnonKey || !window.supabase) {
@@ -104,10 +109,55 @@ for (const [form, campo, msg] of [["#vMfaCodigo", "#mfaCodigo", "#mMfaCodigo"], 
       if (code.length !== 6) { $(msg).textContent = "Escribe los 6 dígitos."; return; }
       const { error } = await sb.auth.mfa.challengeAndVerify({ factorId: factorMfa, code });
       if (error) { $(msg).textContent = traducir(error.message); return; }
+      if (definirPendiente) { definirPendiente = false; vista("vDefinir"); return; }
       try { await cargar(true); } catch (err) { $(msg).textContent = traducir(err.message); }
     });
   });
 }
+document.addEventListener("click", (e) => {
+  const ir = e.target.closest("[data-ir]")?.dataset.ir;
+  if (!ir) return;
+  if (ir === "vRecuperar") { $("#emailRec").value = $("#email").value.trim(); $("#mRecuperar").textContent = ""; }
+  vista(ir);
+});
+$("#vRecuperar").addEventListener("submit", (e) => {
+  e.preventDefault();
+  ocupado(e.target, async () => {
+    const email = $("#emailRec").value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) { $("#mRecuperar").textContent = "Escribe un correo válido."; return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + "/ventas/" });
+    if (error && /rate limit/i.test(error.message)) { $("#mRecuperar").textContent = traducir(error.message); return; }
+    $("#emailEnviado").textContent = email;
+    vista("vEnviado");
+  });
+});
+
+// Con la verificación en dos pasos activa, Supabase solo deja cambiar la contraseña después de ingresar el código.
+async function mostrarDefinir(email) {
+  $("#cuentaDefinir").textContent = email || "";
+  const { data } = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (data?.nextLevel === "aal2" && data.currentLevel !== "aal2") { definirPendiente = true; return pasoMfa(); }
+  vista("vDefinir");
+}
+$("#vDefinir").addEventListener("submit", (e) => {
+  e.preventDefault();
+  ocupado(e.target, async () => {
+    const c1 = $("#clave1").value, c2 = $("#clave2").value;
+    $("#mDefinir").textContent = "";
+    if (c1.length < 8) { $("#mDefinir").textContent = "La contraseña debe tener al menos 8 caracteres."; return; }
+    if (c1 !== c2) { $("#mDefinir").textContent = "Las contraseñas no coinciden."; return; }
+    const { error } = await sb.auth.updateUser({ password: c1 });
+    if (error) {
+      if (/aal2/i.test(error.message) || error.code === "insufficient_aal") { definirPendiente = true; return pasoMfa(); }
+      if (/session/i.test(error.message)) return vista("vVencido");
+      $("#mDefinir").textContent = /different from the old/i.test(error.message) ? "Usa una contraseña distinta a la anterior." : /weak|characters/i.test(error.message) ? "Esa contraseña es muy débil. Usa una más larga o con números y símbolos." : traducir(error.message);
+      return;
+    }
+    $("#clave1").value = $("#clave2").value = "";
+    try { await continuar(); } catch (err) { vista("vEntrar"); $("#mEntrar").textContent = traducir(err.message); }
+  });
+});
+
 $("#salir").addEventListener("click", async () => { clearInterval(timer); await sb.auth.signOut(); datos = []; vista("vEntrar"); });
 
 /* ---------- Datos ---------- */
@@ -347,7 +397,12 @@ $("#exportar").addEventListener("click", () => {
 
 /* ---------- Arranque ---------- */
 const { data: { session } } = await sb.auth.getSession();
-if (session) {
+if (tipoEnlace || errorEnlace) history.replaceState(null, "", location.pathname);
+if (errorEnlace) vista("vVencido");
+else if (tipoEnlace === "recovery" || tipoEnlace === "invite") {
+  if (!session) vista("vVencido");
+  else await mostrarDefinir(session.user?.email).catch(() => vista("vVencido"));
+} else if (session) {
   try { await continuar(); }
   catch (e) { if ($("#acceso").hidden || !$("#vEntrar").hidden) { vista("vEntrar"); $("#mEntrar").textContent = traducir(e.message); } }
 }
