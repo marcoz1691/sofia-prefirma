@@ -20,12 +20,14 @@ export function obtenerServicios(env = process.env) {
   const almacen = env.SUPABASE_URL
     ? crearAlmacenSupabase({ url: env.SUPABASE_URL, clave: env.SUPABASE_SERVICE_ROLE_KEY, notariaId })
     : crearAlmacenMemoria();
+  // Meta espera el número en dígitos internacionales, sin «+» ni espacios (ej. 59398…).
+  const avisoWhatsApp = String(env.AVISOS_WHATSAPP || "").replace(/\D/g, "");
   const whatsapp = limitarPlantillas(crearWhatsApp({ token: env.WHATSAPP_TOKEN, phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID, version: env.WHATSAPP_API_VERSION || "v23.0" }),
-    almacen, { exentos: [env.AVISOS_WHATSAPP].filter(Boolean) });
+    almacen, { exentos: [avisoWhatsApp].filter(Boolean) });
   const contenido = crearContenido({ almacen });
   const avisar = async (texto) => {
-    if (!env.AVISOS_WHATSAPP) return;
-    try { await whatsapp.enviarPlantilla(env.AVISOS_WHATSAPP, env.AVISOS_PLANTILLA || "aviso_personal", [texto.slice(0, 1000)]); }
+    if (!avisoWhatsApp) return;
+    try { await whatsapp.enviarPlantilla(avisoWhatsApp, env.AVISOS_PLANTILLA || "aviso_personal", [texto.slice(0, 1000)]); }
     catch (e) { console.error("No se pudo avisar al personal:", e.message); }
   };
   let asistente;
