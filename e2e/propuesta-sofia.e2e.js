@@ -116,6 +116,25 @@ test("Vitrina queda como opción discreta debajo de los planes", async ({ page }
   await expect(dialogo.locator("#eleccion-oferta")).toBeHidden();
 });
 
+test("la propuesta muestra primero el video de una notaría genérica y su objetivo", async ({ page, request }) => {
+  await page.goto("/propuesta-sofia.html");
+  const secciones = await page.locator("main > section").evaluateAll(s => s.map(e => e.id || e.className));
+  expect(secciones.slice(0, 3)).toEqual(["inicio", "recorrido", "problema"]);
+  await expect(page.locator("#recorrido h2")).toHaveText("El objetivo: que cada cliente llegue a firmar con todo listo, a la primera.");
+  const video = page.locator("#recorrido video");
+  await expect(video).toHaveAttribute("poster", "assets/demo/demo-sofia-prefirma.jpg");
+  await expect(video).toHaveAttribute("preload", "none");
+  await expect(video.locator("source")).toHaveAttribute("src", "assets/demo/demo-sofia-prefirma.mp4");
+  for (const ruta of ["/assets/demo/demo-sofia-prefirma.mp4", "/assets/demo/demo-sofia-prefirma.jpg"]) {
+    expect((await request.get(ruta)).ok(), ruta).toBe(true);
+  }
+  await expect(page.locator("#video-pasos li")).toHaveCount(4);
+  await expect(page.locator(".problema__con")).toHaveCount(3);
+  await expect(page.getByText(/Notaría 42/)).toHaveCount(0);
+  await page.getByRole("link", { name: "Ver cómo funciona · video" }).click();
+  await expect(page).toHaveURL(/#recorrido$/);
+});
+
 test("la propuesta tiene una versión limpia para imprimir en PDF", async ({ page }) => {
   await page.goto("/propuesta-sofia.html");
   await page.emulateMedia({ media: "print" });
